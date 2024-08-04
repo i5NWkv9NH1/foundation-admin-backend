@@ -1,0 +1,125 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type Department {
+  id: ID!
+  name: String!
+  users: [User!]!
+}
+
+type Permission {
+  id: ID!
+  action: String!
+  resource: String!
+  roles: [Role!]!
+}
+
+type Role {
+  id: ID!
+  name: String!
+  permissions: [Permission!]!
+  users: [User!]!
+}
+
+type User {
+  id: String!
+  username: String!
+  password: String!
+  email: String!
+  avatarUrl: String
+  department: Department
+  roles: [Role!]!
+}
+
+type Resource {
+  id: ID!
+  name: String!
+}
+
+type Query {
+  sayHello: String!
+  users: [User!]!
+  user(id: String!): User!
+  roles: [Role!]!
+  role(id: String!): Role!
+  departments: [Department!]!
+  department(id: String!): Department!
+  permissions: [Permission!]!
+  permission(id: String!): Permission!
+  resource(id: String!): Resource!
+}
+
+type Mutation {
+  createUser(createUserInput: CreateUserInput!): User!
+  updateUser(updateUserInput: UpdateUserInput!): User!
+  removeUser(id: String!): Boolean!
+  createRole(createRoleInput: CreateRoleInput!): Role!
+  updateRole(updateRoleInput: UpdateRoleInput!): Role!
+  removeRole(id: String!): Boolean!
+  createDepartment(createDepartmentInput: CreateDepartmentInput!): Department!
+  updateDepartment(updateDepartmentInput: UpdateDepartmentInput!): Department!
+  removeDepartment(id: String!): Boolean!
+  createPermission(createPermissionInput: CreatePermissionInput!): Permission!
+  updatePermission(updatePermissionInput: UpdatePermissionInput!): Permission!
+  removePermission(id: String!): Boolean!
+  createResource(createResourceInput: CreateResourceInput!): Resource!
+  updateResource(updateResourceInput: UpdateResourceInput!): Resource!
+  removeResource(id: String!): Resource!
+}
+
+input CreateUserInput {
+  username: String!
+  email: String!
+  password: String!
+  avatarUrl: String!
+}
+
+input UpdateUserInput {
+  id: ID!
+  username: String
+  email: String
+  password: String
+}
+
+input CreateRoleInput {
+  name: String!
+  permissionIds: [String!]!
+}
+
+input UpdateRoleInput {
+  id: ID!
+  name: String
+  permissionIds: [String!]
+}
+
+input CreateDepartmentInput {
+  name: String!
+}
+
+input UpdateDepartmentInput {
+  id: ID!
+  name: String
+}
+
+input CreatePermissionInput {
+  action: String!
+  resource: String!
+  roleIds: [String!]!
+}
+
+input UpdatePermissionInput {
+  id: ID!
+  action: String
+  resource: String
+  roleIds: [String!]
+}
+
+input CreateResourceInput {
+  id: String!
+}
+
+input UpdateResourceInput {
+  id: String!
+  name: String
+}

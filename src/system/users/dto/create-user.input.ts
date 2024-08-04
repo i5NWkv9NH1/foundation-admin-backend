@@ -1,7 +1,6 @@
 import { Field, InputType } from '@nestjs/graphql'
 import { Stream } from 'stream'
 //@ts-ignore
-import * as GraphQLUpload from 'graphql-upload/GraphQLUpload.js'
 
 @InputType()
 export class CreateUserInput {
@@ -14,8 +13,8 @@ export class CreateUserInput {
   @Field()
   password: string
 
-  @Field(() => GraphQLUpload)
-  avatarUrl: Promise<FileUpload>
+  @Field()
+  avatarUrl: string
 }
 
 export interface FileUpload {
