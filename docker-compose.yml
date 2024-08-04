@@ -1,0 +1,71 @@
+services:
+  treasure-street-postgres:
+    image: postgres
+    restart: always
+    container_name: treasure-street-postgres
+    env_file:
+      - .env
+    volumes:
+      - treasure-street-postgres:/var/lib/postgresql/data
+    ports:
+      - '${POSTGRES_PORT}:5432'
+    networks:
+      - treasure-street-network
+
+  treasure-street-redis:
+    image: redis
+    container_name: treasure-street-redis
+    env_file:
+      - .env
+    ports:
+      - '${REDIS_PORT}:6379'
+    volumes:
+      - treasure-street-redis:/data
+    networks:
+      - treasure-street-network
+
+  treasure-street-elasticsearch:
+    image: elasticsearch:8.14.3
+    container_name: treasure-street-elasticsearch
+    env_file:
+      - .env
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - 'ES_JAVA_OPTS=-Xms512m -Xmx512m'
+    ports:
+      - '${ELASTICSEARCH_PORT}:9200'
+      - '${ELASTICSEARCH_TP}:9300'
+    volumes:
+      - treasure-street-elasticsearch:/usr/share/elasticsearch/data
+    networks:
+      - treasure-street-network
+
+  # treasure-street-nest:
+  #   image: node:18-alpine
+  #   container_name: treasure-street-nest
+  #   build:
+  #     context: .
+  #     dockerfile: dockerfile
+
+  #   restart: always
+  #   env_file:
+  #     - .env
+  #   ports:
+  #     - '15700:3000'
+  #   depends_on:
+  #     - treasure-street-postgres
+  #     - treasure-street-redis
+  #     - treasure-street-elasticsearch
+  #   networks:
+  #     - treasure-street-network
+  #   volumes:
+  #     - ./:/app
+
+volumes:
+  treasure-street-postgres:
+  treasure-street-redis:
+  treasure-street-elasticsearch:
+
+networks:
+  treasure-street-network:
