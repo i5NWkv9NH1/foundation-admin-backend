@@ -1,13 +1,15 @@
+import { RedisModule } from '@liaoliaots/nestjs-redis'
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
-import { TypeOrmModule } from '@nestjs/typeorm'
-import { RedisModule } from '@liaoliaots/nestjs-redis'
 import { ElasticsearchModule } from '@nestjs/elasticsearch'
-import { TypeOrmConfigService } from './typeorm-config.service' // 下面会创建
-import { RedisConfigService } from './redis-config.service' // 下面会创建
-import { ElasticsearchConfigService } from './elasticsearch-config.service' // 下面会创建
+import { TypeOrmModule } from '@nestjs/typeorm'
 import { AppController } from './app.controller'
+import { AppResolver } from './app.resolver'
 import { AppService } from './app.service'
+import { ElasticsearchConfigService } from './elasticsearch-config.service' // 下面会创建
+import { RedisConfigService } from './redis-config.service' // 下面会创建
+import { SystemModule } from './system/system.module'
+import { TypeOrmConfigService } from './typeorm-config.service' // 下面会创建
 
 @Module({
   imports: [
@@ -25,9 +27,10 @@ import { AppService } from './app.service'
     ElasticsearchModule.registerAsync({
       imports: [ConfigModule],
       useClass: ElasticsearchConfigService
-    })
+    }),
+    SystemModule
   ],
   controllers: [AppController],
-  providers: [AppService]
+  providers: [AppService, AppResolver]
 })
 export class AppModule {}
