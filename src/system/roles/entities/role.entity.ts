@@ -1,20 +1,20 @@
 import { Column, Entity, JoinTable, ManyToMany } from 'typeorm'
 import { BaseEntity } from '../../../shared/entities/base.entity'
 import { Action } from '../../../system/actions/entities/action.entity'
-import { User } from '../../../system/users/entities/user.entity'
+import { Account } from 'src/system/accounts/entities/account.entity'
 
 @Entity('system_role')
 export class Role extends BaseEntity {
   @Column()
   name: string
 
-  @ManyToMany(() => User, (user) => user.roles)
+  @ManyToMany(() => Account, (account) => account.roles)
   @JoinTable({
-    name: 'system_user_role',
+    name: 'system_account_role',
     joinColumn: { name: 'roleId' },
     inverseJoinColumn: { name: 'userId' }
   })
-  users: User[]
+  users: Account[]
 
   @ManyToMany(() => Action, (action) => action.roles)
   @JoinTable({

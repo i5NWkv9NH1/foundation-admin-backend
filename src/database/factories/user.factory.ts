@@ -1,12 +1,12 @@
 import { faker } from '@faker-js/faker'
-import { User } from 'src/system/users/entities/user.entity'
+import { Account } from 'src/system/accounts/entities/account.entity'
 import { define } from 'typeorm-seeding'
 
-define(User, () => {
+define(Account, () => {
   const firstName = faker.person.firstName('female')
   const lastName = faker.person.lastName('female')
 
-  const user = new User()
+  const user = new Account()
   user.name = `${firstName} ${lastName}`
   user.password = faker.word.sample()
   return user

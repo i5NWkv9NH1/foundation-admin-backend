@@ -1,10 +1,10 @@
 import { Column, Entity, JoinTable, ManyToMany } from 'typeorm'
 import { BaseEntity } from '../../../shared/entities/base.entity'
-import { Organization } from '../../../system/organizations/entities/organization.entity'
-import { Role } from '../../../system/roles/entities/role.entity'
+import { Organization } from '../../organizations/entities/organization.entity'
+import { Role } from '../../roles/entities/role.entity'
 
-@Entity('system_user')
-export class User extends BaseEntity {
+@Entity('system_account')
+export class Account extends BaseEntity {
   @Column({ length: 36 })
   name: string
 
@@ -31,7 +31,7 @@ export class User extends BaseEntity {
 
   @ManyToMany(() => Organization, (organization) => organization)
   @JoinTable({
-    name: 'system_user_organization',
+    name: 'system_account_organization',
     joinColumn: { name: 'userId' },
     inverseJoinColumn: { name: 'organizationId' }
   })
@@ -39,7 +39,7 @@ export class User extends BaseEntity {
 
   @ManyToMany(() => Role, (role) => role)
   @JoinTable({
-    name: 'system_user_role',
+    name: 'system_account_role',
     joinColumn: { name: 'userId' },
     inverseJoinColumn: { name: 'roleId' }
   })

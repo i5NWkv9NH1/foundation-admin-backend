@@ -11,33 +11,21 @@ export abstract class BaseService<T> {
   // 通用分页方法
   async paginate(
     page: number = 1,
-    pageSize: number = 10
+    pageSize: number = 10,
+    relations: string[] = []
   ): Promise<PaginatedResult<T>> {
     const alias = this.getQueryBuilderAlias()
     const queryBuilder = this.repository.createQueryBuilder(alias)
+
+    // 加载关联关系
+    if (relations.length > 0) {
+      relations.forEach((relation) => {
+        queryBuilder.leftJoinAndSelect(`${alias}.${relation}`, relation)
+      })
+    }
     return await this.applyPagination(queryBuilder, page, pageSize)
   }
 
-  // protected async applyPagination(
-  //   queryBuilder: SelectQueryBuilder<T>,
-  //   page: number = 1,
-  //   pageSize: number = 10
-  // ): Promise<PaginatedResult<T>> {
-  //   const [items, total] = await queryBuilder
-  //     .skip((page - 1) * pageSize)
-  //     .take(pageSize)
-  //     .getManyAndCount()
-
-  //   return {
-  //     items,
-  //     meta: {
-  //       currentPage: page,
-  //       pageSize: pageSize,
-  //       total: total,
-  //       totalPages: Math.ceil(total / pageSize)
-  //     }
-  //   }
-  // }
   protected async applyPagination(
     queryBuilder: SelectQueryBuilder<T>,
     page: number = 1,
@@ -62,8 +50,8 @@ export abstract class BaseService<T> {
         }
       }
     } else {
-      // 当 pageSize 为正数时，执行分页逻辑
       ;[items, total] = await queryBuilder
+        // 当 pageSize 为正数时，执行分页逻辑
         .skip((page - 1) * pageSize)
         .take(pageSize)
         .getManyAndCount()
@@ -79,6 +67,27 @@ export abstract class BaseService<T> {
       }
     }
   }
+
+  // protected async applyPagination(
+  //   queryBuilder: SelectQueryBuilder<T>,
+  //   page: number = 1,
+  //   pageSize: number = 10
+  // ): Promise<PaginatedResult<T>> {
+  //   const [items, total] = await queryBuilder
+  //     .skip((page - 1) * pageSize)
+  //     .take(pageSize)
+  //     .getManyAndCount()
+
+  //   return {
+  //     items,
+  //     meta: {
+  //       currentPage: page,
+  //       pageSize: pageSize,
+  //       total: total,
+  //       totalPages: Math.ceil(total / pageSize)
+  //     }
+  //   }
+  // }
 
   async findOne(id: string): Promise<T | null> {
     return this.repository.findOneBy({ id } as any)

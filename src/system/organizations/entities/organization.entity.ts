@@ -1,6 +1,6 @@
 import { BaseEntity } from 'src/shared/entities/base.entity'
+import { Account } from 'src/system/accounts/entities/account.entity'
 import { Column, Entity, ManyToMany, ManyToOne, OneToMany } from 'typeorm'
-import { User } from '../../users/entities/user.entity'
 
 @Entity('system_organization')
 export class Organization extends BaseEntity {
@@ -25,6 +25,6 @@ export class Organization extends BaseEntity {
   @OneToMany(() => Organization, (organization) => organization.parent)
   children: Organization[]
 
-  @ManyToMany(() => User, (user) => user.organizations)
-  users: User[]
+  @ManyToMany(() => Account, (account) => account.organizations)
+  users: Account[]
 }

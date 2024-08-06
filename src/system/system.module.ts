@@ -9,16 +9,12 @@ import { CDNModule } from './cdn/cdn.module'
 import { MenusModule } from './menus/menus.module'
 import { OrganizationsModule } from './organizations/organizations.module'
 import { RolesModule } from './roles/roles.module'
-import { UsersModule } from './users/users.module'
+import { AccountsModule } from './accounts/accounts.module'
 
 @Module({
   imports: [
-    GraphQLModule.forRoot<ApolloDriverConfig>({
-      driver: ApolloDriver,
-      autoSchemaFile: join(process.cwd(), 'src/schema.gql')
-    }),
     AuthModule,
-    UsersModule,
+    AccountsModule,
     RolesModule,
     ActionsModule,
     MenusModule,
@@ -28,7 +24,7 @@ import { UsersModule } from './users/users.module'
   ],
   exports: [
     AuthModule,
-    UsersModule,
+    AccountsModule,
     RolesModule,
     ActionsModule,
     MenusModule,
