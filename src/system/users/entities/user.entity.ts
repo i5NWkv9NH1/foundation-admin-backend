@@ -1,46 +1,47 @@
-import { Field, ObjectType } from '@nestjs/graphql'
-import { Department } from 'src/system/department/entities/department.entity'
-import { Role } from 'src/system/roles/entities/role.entity'
-import {
-  Column,
-  Entity,
-  JoinTable,
-  ManyToMany,
-  ManyToOne,
-  PrimaryGeneratedColumn
-} from 'typeorm'
+import { Column, Entity, JoinTable, ManyToMany } from 'typeorm'
+import { BaseEntity } from '../../../shared/entities/base.entity'
+import { Organization } from '../../../system/organizations/entities/organization.entity'
+import { Role } from '../../../system/roles/entities/role.entity'
 
-@ObjectType()
-@Entity()
-export class User {
-  @Field()
-  @PrimaryGeneratedColumn('uuid')
-  id: string
+@Entity('system_user')
+export class User extends BaseEntity {
+  @Column({ length: 36 })
+  name: string
 
-  @Field()
   @Column()
   username: string
 
-  @Field()
   @Column()
   password: string
 
-  @Field()
-  @Column()
+  @Column({ nullable: true })
   email: string
 
-  @Field({ nullable: true })
   @Column({ nullable: true })
-  avatarUrl: string // Field to store the avatar URL
+  phone: string
 
-  @Field(() => Department, { nullable: true })
-  @ManyToOne(() => Department, (department) => department.users, {
-    nullable: true
+  @Column({ nullable: true })
+  address: string
+
+  @Column({
+    nullable: true,
+    default: `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70) + 1}`
   })
-  department: Department
+  avatarUrl: string
 
-  @Field(() => [Role])
-  @ManyToMany(() => Role, (role) => role.users)
-  @JoinTable()
+  @ManyToMany(() => Organization, (organization) => organization)
+  @JoinTable({
+    name: 'system_user_organization',
+    joinColumn: { name: 'userId' },
+    inverseJoinColumn: { name: 'organizationId' }
+  })
+  organizations: Organization[]
+
+  @ManyToMany(() => Role, (role) => role)
+  @JoinTable({
+    name: 'system_user_role',
+    joinColumn: { name: 'userId' },
+    inverseJoinColumn: { name: 'roleId' }
+  })
   roles: Role[]
 }

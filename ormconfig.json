@@ -1,0 +1,12 @@
+{
+  "type": "postgres",
+  "host": "localhost",
+  "port": 15432,
+  "username": "sora",
+  "password": "aaa123",
+  "database": "treasure_street_db",
+  "autoLoadEntities": true,
+  "synchronize": true,
+  "seeds": ["src/seeds/**/*{.ts,.js}"],
+  "factories": ["src/factories/**/*{.ts,.js}"]
+}

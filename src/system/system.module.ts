@@ -3,10 +3,11 @@ import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo'
 import { Module } from '@nestjs/common'
 import { GraphQLModule } from '@nestjs/graphql'
 import { join } from 'path'
+import { ActionsModule } from './actions/actions.module'
 import { AuthModule } from './auth/auth.module'
-import { DepartmentModule } from './department/department.module'
-import { PermissionModule } from './permission/permission.module'
-import { ResourceModule } from './resource/resource.module'
+import { CDNModule } from './cdn/cdn.module'
+import { MenusModule } from './menus/menus.module'
+import { OrganizationsModule } from './organizations/organizations.module'
 import { RolesModule } from './roles/roles.module'
 import { UsersModule } from './users/users.module'
 
@@ -19,18 +20,20 @@ import { UsersModule } from './users/users.module'
     AuthModule,
     UsersModule,
     RolesModule,
-    DepartmentModule,
-    PermissionModule,
-    ResourceModule
+    ActionsModule,
+    MenusModule,
+    OrganizationsModule,
+    CDNModule
     // Add other modules as needed
   ],
   exports: [
     AuthModule,
     UsersModule,
     RolesModule,
-    DepartmentModule,
-    PermissionModule,
-    ResourceModule
+    ActionsModule,
+    MenusModule,
+    OrganizationsModule,
+    CDNModule
     // Add other modules as needed
   ]
 })
