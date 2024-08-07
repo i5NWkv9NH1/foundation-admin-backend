@@ -1,9 +1,14 @@
-import { Controller, Get, Query } from '@nestjs/common'
+import { Get, Query } from '@nestjs/common'
+import { SystemController } from 'src/shared/decorators'
+import { BaseController } from 'src/shared/providers/base.controller'
 import { ActionService } from './action.service'
+import { Action } from './entities/action.entity'
 
-@Controller('actions')
-export class ActionController {
-  constructor(private readonly actionService: ActionService) {}
+@SystemController('actions')
+export class ActionController extends BaseController<Action> {
+  constructor(private readonly actionService: ActionService) {
+    super(actionService)
+  }
 
   @Get()
   async findAll(

@@ -1,7 +1,24 @@
-import { Controller } from '@nestjs/common'
+import { Get, Param, Query } from '@nestjs/common'
+import { SystemController } from 'src/shared/decorators'
+import { BaseController } from 'src/shared/providers/base.controller'
+import { Role } from './entities/role.entity'
 import { RoleService } from './role.service'
 
-@Controller('roles')
-export class RoleController {
-  constructor(private readonly roleService: RoleService) {}
+@SystemController('roles')
+export class RoleController extends BaseController<Role> {
+  constructor(private readonly roleService: RoleService) {
+    super(roleService)
+  }
+  @Get()
+  async findAll(
+    @Query('page') page: number = 1,
+    @Query('itemPerPage') itemPerPage: number = 10
+  ) {
+    return await this.roleService.findAll(page, itemPerPage)
+  }
+
+  @Get(':id')
+  async findOne(@Param('id') id: string) {
+    return await this.roleService.findOne(id)
+  }
 }

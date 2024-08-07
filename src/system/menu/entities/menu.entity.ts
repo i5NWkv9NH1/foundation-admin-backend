@@ -1,6 +1,6 @@
 import { BaseEntity } from 'src/shared/entities/base.entity'
 import { Action } from 'src/system/action/entities/action.entity'
-import { Column, Entity, ManyToOne, OneToMany } from 'typeorm'
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm'
 
 export enum MenuRelations {
   Actions = 'actions'
@@ -18,7 +18,8 @@ export class Menu extends BaseEntity {
   path?: string
   @Column({ nullable: true, name: 'parent_id' })
   parentId?: string
-  @ManyToOne(() => Menu, (menu) => menu.children)
+  @ManyToOne(() => Menu, (menu) => menu.children, { nullable: true })
+  @JoinColumn({ name: 'parent_id' })
   parent: Menu
   @OneToMany(() => Menu, (menu) => menu.parent)
   children: Menu[]

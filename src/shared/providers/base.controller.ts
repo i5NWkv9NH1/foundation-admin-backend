@@ -1,5 +1,4 @@
-import { Body, Delete, Get, Param, Post, Put, Query } from '@nestjs/common'
-import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity'
+import { Get, Param, Query } from '@nestjs/common'
 import { BaseEntity } from '../entities/base.entity'
 import { PaginatedResult } from '../interfaces/paginated-result'
 import { BaseService } from './base.service'
@@ -20,21 +19,21 @@ export abstract class BaseController<T extends BaseEntity> {
     return await this.service.findOne(id)
   }
 
-  @Post()
-  async create(@Body() data: T): Promise<T> {
-    return await this.service.create(data)
-  }
+  // @Post()
+  // async create(@Body() data: T): Promise<T> {
+  //   return await this.service.create(data)
+  // }
 
-  @Put(':id')
-  async update(
-    @Param('id') id: string,
-    @Body() data: QueryDeepPartialEntity<T>
-  ): Promise<T> {
-    return await this.service.update(id, data)
-  }
+  // @Put(':id')
+  // async update(
+  //   @Param('id') id: string,
+  //   @Body() data: QueryDeepPartialEntity<T>
+  // ): Promise<T> {
+  //   return await this.service.update(id, data)
+  // }
 
-  @Delete(':id')
-  async delete(@Param('id') id: string): Promise<void> {
-    await this.service.delete(id)
-  }
+  // @Delete(':id')
+  // async delete(@Param('id') id: string): Promise<void> {
+  //   await this.service.delete(id)
+  // }
 }

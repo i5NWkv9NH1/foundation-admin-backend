@@ -1,40 +1,30 @@
 import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Action } from './entities/action.entity'
-import { Repository } from 'typeorm'
 import { PaginatedResult } from 'src/shared/interfaces/paginated-result'
+import { BaseService } from 'src/shared/providers/base.service'
+import { Repository, SelectQueryBuilder } from 'typeorm'
+import { Action } from './entities/action.entity'
 
 @Injectable()
-export class ActionService {
+export class ActionService extends BaseService<Action> {
   constructor(
     @InjectRepository(Action)
     private readonly repo: Repository<Action>
-  ) {}
+  ) {
+    super(repo)
+  }
+
+  protected applyCustomizations(
+    qb: SelectQueryBuilder<Action>
+  ): SelectQueryBuilder<Action> {
+    return qb
+  }
 
   async findAll(
     page: number,
-    itemPerPage: number,
-    filters?: any
+    itemPerPage: number
   ): Promise<PaginatedResult<Action>> {
-    // 获取总记录数
-    const queryBuilder = this.repo.createQueryBuilder('action')
-    const totalItemsPromise = queryBuilder.getCount()
-    // 应用分页
-    queryBuilder.skip(itemPerPage * (page - 1)).take(itemPerPage)
-    const [items, totalItems] = await Promise.all([
-      queryBuilder.getMany(),
-      totalItemsPromise
-    ])
-    const pagesCount = Math.ceil(totalItems / itemPerPage)
-
-    return {
-      items,
-      meta: {
-        page,
-        itemPerPage,
-        itemsCount: totalItems,
-        pagesCount
-      }
-    }
+    const qb = this.repo.createQueryBuilder('action')
+    return await super.findAll(page, itemPerPage, qb)
   }
 }

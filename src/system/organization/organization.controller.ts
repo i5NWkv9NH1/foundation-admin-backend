@@ -1,7 +1,11 @@
-import { Controller } from '@nestjs/common'
+import { SystemController } from 'src/shared/decorators'
+import { BaseController } from 'src/shared/providers/base.controller'
+import { Organization } from './entities/organization.entity'
 import { OrganizationService } from './organization.service'
 
-@Controller('organizations')
-export class OrganizationController {
-  constructor(private readonly organizationService: OrganizationService) {}
+@SystemController('organizations')
+export class OrganizationController extends BaseController<Organization> {
+  constructor(private readonly organizationService: OrganizationService) {
+    super(organizationService)
+  }
 }

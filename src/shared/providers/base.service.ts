@@ -1,5 +1,4 @@
-import { FindOptionsWhere, Repository, SelectQueryBuilder } from 'typeorm'
-import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity'
+import { Repository, SelectQueryBuilder } from 'typeorm'
 import { BaseEntity } from '../entities/base.entity'
 import { PaginatedResult } from '../interfaces/paginated-result' // Assume this interface is defined
 
@@ -40,20 +39,23 @@ export abstract class BaseService<T extends BaseEntity> {
   async findOne(id: string, qb?: SelectQueryBuilder<T>): Promise<T> {
     qb = qb || this.repository.createQueryBuilder()
     qb = this.applyCustomizations(qb)
-    return qb.where({ id } as FindOptionsWhere<T>).getOne()
+    // return qb.where({ id } as FindOptionsWhere<T>).getOne()
+    // return qb.where('.id = :id', { id }).getOne()
+    // @ts-ignore
+    return await this.repository.findOne({ where: { id } })
   }
 
-  async create(data: T): Promise<T> {
-    const entity = this.repository.create(data)
-    return this.repository.save(entity)
-  }
+  // async create(data: T): Promise<T> {
+  //   const entity = this.repository.create(data)
+  //   return this.repository.save(entity)
+  // }
 
-  async update(id: string, data: QueryDeepPartialEntity<T>): Promise<T> {
-    await this.repository.update(id, data)
-    return this.findOne(id)
-  }
+  // async update(id: string, data: QueryDeepPartialEntity<T>): Promise<T> {
+  //   await this.repository.update(id, data)
+  //   return this.findOne(id)
+  // }
 
-  async delete(id: string): Promise<void> {
-    await this.repository.delete(id)
-  }
+  // async delete(id: string): Promise<void> {
+  //   await this.repository.delete(id)
+  // }
 }

@@ -1,21 +1,44 @@
 import { Injectable } from '@nestjs/common'
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm'
-import { DataSource, Like, Repository } from 'typeorm'
+import { PaginatedResult } from 'src/shared/interfaces/paginated-result'
+import { BaseService } from 'src/shared/providers/base.service'
+import { DataSource, Like, Repository, SelectQueryBuilder } from 'typeorm'
 import { Organization } from './entities/organization.entity'
 
 @Injectable()
-export class OrganizationService {
+export class OrganizationService extends BaseService<Organization> {
   constructor(
     @InjectRepository(Organization)
     private readonly organizationRepository: Repository<Organization>,
     @InjectDataSource()
     private readonly dataSource: DataSource // 注入 DataSource
-  ) {}
+  ) {
+    super(organizationRepository)
+  }
+
+  protected applyCustomizations(
+    qb: SelectQueryBuilder<Organization>
+  ): SelectQueryBuilder<Organization> {
+    return qb
+      .leftJoinAndSelect('organization.parent', 'parent')
+      .leftJoinAndSelect('organization.children', 'children')
+      .leftJoinAndSelect('organization.accounts', 'accounts')
+  }
+
+  async findAll(
+    page: number,
+    itemPerPage: number
+  ): Promise<PaginatedResult<Organization>> {
+    const qb = this.organizationRepository.createQueryBuilder('organization')
+    return await super.findAll(page, itemPerPage, qb)
+  }
 
   async findOne(id: string): Promise<Organization> {
-    // 查找单个组织
+    // const qb = this.organizationRepository.createQueryBuilder('organization')
+    // return await super.findOne(id, qb)
     return await this.organizationRepository.findOne({
-      where: { id }
+      where: { id },
+      relations: ['accounts']
     })
   }
 
@@ -39,28 +62,28 @@ export class OrganizationService {
     )
   }
 
-  async update(entity: Organization): Promise<Organization> {
-    // 查找现有组织
-    const existingOrganization = await this.organizationRepository.findOne({
-      where: { id: entity.id }
-    })
+  // async update(entity: Organization): Promise<Organization> {
+  //   // 查找现有组织
+  //   const existingOrganization = await this.organizationRepository.findOne({
+  //     where: { id: entity.id }
+  //   })
 
-    if (existingOrganization) {
-      return await this.dataSource.transaction(
-        async (transactionalEntityManager) => {
-          // 更新组织实体
-          Object.assign(existingOrganization, entity)
-          // 保存更新后的组织实体
-          const result = await transactionalEntityManager.save(
-            Organization,
-            existingOrganization
-          )
-          return result
-        }
-      )
-    }
-    return null // 如果没有找到组织，返回 null
-  }
+  //   if (existingOrganization) {
+  //     return await this.dataSource.transaction(
+  //       async (transactionalEntityManager) => {
+  //         // 更新组织实体
+  //         Object.assign(existingOrganization, entity)
+  //         // 保存更新后的组织实体
+  //         const result = await transactionalEntityManager.save(
+  //           Organization,
+  //           existingOrganization
+  //         )
+  //         return result
+  //       }
+  //     )
+  //   }
+  //   return null // 如果没有找到组织，返回 null
+  // }
 
   async remove(id: string): Promise<void> {
     // 查找要删除的组织
