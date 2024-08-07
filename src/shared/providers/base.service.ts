@@ -15,7 +15,7 @@ export abstract class BaseService<T extends BaseEntity> {
     itemPerPage: number,
     qb?: SelectQueryBuilder<T> // Optional parameter to allow custom qb
   ): Promise<PaginatedResult<T>> {
-    qb = qb || this.repository.createQueryBuilder()
+    qb = qb || this.repository.createQueryBuilder().orderBy('createdAt', 'DESC')
     qb = this.applyCustomizations(qb)
     const totalItemsPromise = qb.getCount()
     qb.skip(itemPerPage * (page - 1)).take(itemPerPage)

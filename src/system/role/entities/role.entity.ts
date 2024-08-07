@@ -1,7 +1,7 @@
 import { BaseEntity } from 'src/shared/entities/base.entity'
 import { Account } from 'src/system/account/entities/account.entity'
 import { Action } from 'src/system/action/entities/action.entity'
-import { Column, Entity, JoinTable, ManyToMany } from 'typeorm'
+import { Column, Entity, Index, JoinTable, ManyToMany } from 'typeorm'
 
 export enum RoleRelations {
   Actions = 'actions'
@@ -11,6 +11,10 @@ export enum RoleRelations {
 export class Role extends BaseEntity {
   @Column()
   name: string
+
+  @Index()
+  @Column({ unique: true })
+  code: string
 
   @ManyToMany(() => Account, (_) => _.roles)
   @JoinTable({

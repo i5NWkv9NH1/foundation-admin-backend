@@ -23,11 +23,7 @@ export class AccountService extends BaseService<Account> {
     return qb
       .leftJoinAndSelect('account.organizations', 'organization')
       .leftJoinAndSelect('account.roles', 'role')
-  }
-
-  async findOne(id: string): Promise<Account> {
-    const qb = this.accountsRepository.createQueryBuilder('account')
-    return await super.findOne(id, qb)
+    // .orderBy('account.createdAt', 'DESC')
   }
 
   async findAll(
@@ -36,5 +32,10 @@ export class AccountService extends BaseService<Account> {
   ): Promise<PaginatedResult<Account>> {
     const qb = this.accountsRepository.createQueryBuilder('account')
     return await super.findAll(page, itemPerPage, qb)
+  }
+
+  async findOne(id: string): Promise<Account> {
+    const qb = this.accountsRepository.createQueryBuilder('account')
+    return await super.findOne(id, qb)
   }
 }

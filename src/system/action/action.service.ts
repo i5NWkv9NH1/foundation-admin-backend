@@ -17,7 +17,7 @@ export class ActionService extends BaseService<Action> {
   protected applyCustomizations(
     qb: SelectQueryBuilder<Action>
   ): SelectQueryBuilder<Action> {
-    return qb
+    return qb.orderBy('action.menuId', 'DESC')
   }
 
   async findAll(

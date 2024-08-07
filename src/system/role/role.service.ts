@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm'
 import { PaginatedResult } from 'src/shared/interfaces/paginated-result'
 import { BaseService } from 'src/shared/providers/base.service'
 import { Repository, SelectQueryBuilder } from 'typeorm'
+import { CreateRoleDto } from './dto/create-role.dto'
 import { Role } from './entities/role.entity'
 
 @Injectable()
@@ -33,5 +34,8 @@ export class RoleService extends BaseService<Role> {
   async findOne(id: string): Promise<Role> {
     const qb = this.roleRepo.createQueryBuilder('role')
     return await super.findOne(id, qb)
+  }
+  async create(createRoleDto: CreateRoleDto) {
+    return this.roleRepo.create(createRoleDto)
   }
 }

@@ -1,7 +1,7 @@
 import { BaseEntity } from 'src/shared/entities/base.entity'
 import { Organization } from 'src/system/organization/entities/organization.entity'
 import { Role } from 'src/system/role/entities/role.entity'
-import { Column, Entity, JoinTable, ManyToMany } from 'typeorm'
+import { Column, Entity, Index, JoinTable, ManyToMany } from 'typeorm'
 
 export enum AccountRelations {
   Roles = 'roles',
@@ -19,22 +19,33 @@ export enum State {
 export class Account extends BaseEntity {
   @Column()
   name: string
+
+  @Index()
   @Column({ nullable: false, unique: true })
   username: string
+
   @Column({ nullable: true, name: 'avatar_url' })
   avatarUrl: string
+
   @Column({ type: 'enum', enum: Gender, nullable: false })
   gender: Gender
+
   @Column({ type: 'enum', enum: State, nullable: false })
   state: State
+
   @Column({ nullable: true })
   phone?: string
+
   @Column({ nullable: true })
   address?: string
+
   @Column()
   password: string
-  @Column({ nullable: true })
+
+  @Index()
+  @Column({ nullable: true, unique: true })
   email?: string
+
   @ManyToMany(() => Role)
   @JoinTable({
     name: 'sys_account_role',
@@ -42,6 +53,7 @@ export class Account extends BaseEntity {
     inverseJoinColumn: { name: 'role_id' }
   })
   roles: Role[]
+
   @ManyToMany(() => Organization)
   @JoinTable({
     name: 'sys_account_organization',

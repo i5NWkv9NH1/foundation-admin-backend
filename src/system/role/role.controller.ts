@@ -1,6 +1,7 @@
-import { Get, Param, Query } from '@nestjs/common'
+import { Body, Get, Param, Post, Query } from '@nestjs/common'
 import { SystemController } from 'src/shared/decorators'
 import { BaseController } from 'src/shared/providers/base.controller'
+import { CreateRoleDto } from './dto/create-role.dto'
 import { Role } from './entities/role.entity'
 import { RoleService } from './role.service'
 
@@ -20,5 +21,10 @@ export class RoleController extends BaseController<Role> {
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return await this.roleService.findOne(id)
+  }
+
+  @Post()
+  async create(@Body() role: CreateRoleDto) {
+    return this.roleService.create(role)
   }
 }
