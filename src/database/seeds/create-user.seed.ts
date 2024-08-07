@@ -1,4 +1,4 @@
-import { Account } from 'src/system/accounts/entities/account.entity'
+import { Account } from 'src/system/account/entities/account.entity'
 import { Connection } from 'typeorm'
 import { Factory, Seeder } from 'typeorm-seeding'
 

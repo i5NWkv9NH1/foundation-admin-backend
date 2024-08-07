@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker'
-import { Account } from 'src/system/accounts/entities/account.entity'
+import { Account } from 'src/system/account/entities/account.entity'
 import { define } from 'typeorm-seeding'
 
 define(Account, () => {

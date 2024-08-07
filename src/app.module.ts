@@ -7,7 +7,6 @@ import { ElasticsearchConfigService } from './elasticsearch-config.service' // �
 import { RedisConfigService } from './redis-config.service' // 下面会创建
 import { SystemModule } from './system/system.module'
 import { TypeOrmConfigService } from './typeorm-config.service' // 下面会创建
-import { UploadModule } from './modules/upload/upload.module'
 import { BusinessModule } from './modules/business.module'
 
 @Module({

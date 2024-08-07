@@ -1,36 +1,17 @@
-// src/system/system.module.ts
-import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo'
 import { Module } from '@nestjs/common'
-import { GraphQLModule } from '@nestjs/graphql'
-import { join } from 'path'
-import { ActionsModule } from './actions/actions.module'
-import { AuthModule } from './auth/auth.module'
-import { CDNModule } from './cdn/cdn.module'
-import { MenusModule } from './menus/menus.module'
-import { OrganizationsModule } from './organizations/organizations.module'
-import { RolesModule } from './roles/roles.module'
-import { AccountsModule } from './accounts/accounts.module'
+import { AccountModule } from './account/account.module'
+import { RoleModule } from './role/role.module'
+import { OrganizationModule } from './organization/organization.module'
+import { ActionModule } from './action/action.module'
+import { MenuModule } from './menu/menu.module'
 
 @Module({
   imports: [
-    AuthModule,
-    AccountsModule,
-    RolesModule,
-    ActionsModule,
-    MenusModule,
-    OrganizationsModule,
-    CDNModule
-    // Add other modules as needed
-  ],
-  exports: [
-    AuthModule,
-    AccountsModule,
-    RolesModule,
-    ActionsModule,
-    MenusModule,
-    OrganizationsModule,
-    CDNModule
-    // Add other modules as needed
+    AccountModule,
+    ActionModule,
+    MenuModule,
+    RoleModule,
+    OrganizationModule
   ]
 })
 export class SystemModule {}
