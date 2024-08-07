@@ -2,6 +2,10 @@ import { BaseEntity } from 'src/shared/entities/base.entity'
 import { Action } from 'src/system/action/entities/action.entity'
 import { Column, Entity, ManyToOne, OneToMany } from 'typeorm'
 
+export enum MenuRelations {
+  Actions = 'actions'
+}
+
 @Entity('sys_menu')
 export class Menu extends BaseEntity {
   @Column()
@@ -10,16 +14,14 @@ export class Menu extends BaseEntity {
   router: string
   @Column()
   icon: string
-  @Column({ nullable: true })
-  parentId?: string
   @Column({ nullable: true, type: 'text' })
   path?: string
-  @Column({ nullable: true, type: 'text' })
-  labelPath?: string
-  @ManyToOne(() => Menu, (_) => _.children)
+  @Column({ nullable: true, name: 'parent_id' })
+  parentId?: string
+  @ManyToOne(() => Menu, (menu) => menu.children)
   parent: Menu
-  @OneToMany(() => Menu, (_) => _.parent)
+  @OneToMany(() => Menu, (menu) => menu.parent)
   children: Menu[]
-  @OneToMany(() => Action, (_) => _.menu)
+  @OneToMany(() => Action, (action) => action.menu)
   actions: Action[]
 }

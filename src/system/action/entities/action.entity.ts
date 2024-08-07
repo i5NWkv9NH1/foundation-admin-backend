@@ -11,7 +11,7 @@ export class Action extends BaseEntity {
   code: string
   @Column()
   icon: string
-  @Column()
+  @Column('uuid', { name: 'menu_id' })
   menuId: string
   @ManyToOne(() => Menu, (_) => _.actions)
   menu: Menu

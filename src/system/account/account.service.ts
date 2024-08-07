@@ -1,26 +1,40 @@
-import { Injectable } from '@nestjs/common';
-import { CreateAccountDto } from './dto/create-account.dto';
-import { UpdateAccountDto } from './dto/update-account.dto';
+import { Injectable } from '@nestjs/common'
+import { InjectRepository } from '@nestjs/typeorm'
+import { PaginatedResult } from 'src/shared/interfaces/paginated-result'
+import { BaseService } from 'src/shared/providers/base.service'
+import { Repository, SelectQueryBuilder } from 'typeorm'
+import { Account } from './entities/account.entity'
 
 @Injectable()
-export class AccountService {
-  create(createAccountDto: CreateAccountDto) {
-    return 'This action adds a new account';
+export class AccountService extends BaseService<Account> {
+  private readonly qb: SelectQueryBuilder<Account>
+
+  constructor(
+    @InjectRepository(Account)
+    private readonly accountsRepository: Repository<Account>
+  ) {
+    super(accountsRepository)
+    this.qb = this.accountsRepository.createQueryBuilder('account')
   }
 
-  findAll() {
-    return `This action returns all account`;
+  protected applyCustomizations(
+    qb: SelectQueryBuilder<Account>
+  ): SelectQueryBuilder<Account> {
+    return qb
+      .leftJoinAndSelect('account.organizations', 'organization')
+      .leftJoinAndSelect('account.roles', 'role')
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} account`;
+  async findOne(id: string): Promise<Account> {
+    const qb = this.accountsRepository.createQueryBuilder('account')
+    return await super.findOne(id, qb)
   }
 
-  update(id: number, updateAccountDto: UpdateAccountDto) {
-    return `This action updates a #${id} account`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} account`;
+  async findAll(
+    page: number,
+    itemPerPage: number
+  ): Promise<PaginatedResult<Account>> {
+    const qb = this.accountsRepository.createQueryBuilder('account')
+    return await super.findAll(page, itemPerPage, qb)
   }
 }

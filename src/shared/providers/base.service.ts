@@ -1,109 +1,59 @@
-import { Repository, SelectQueryBuilder } from 'typeorm'
-import { DeepPartial } from 'typeorm/common/DeepPartial'
-import { PaginatedResult } from '../interfaces/paginated-result'
+import { FindOptionsWhere, Repository, SelectQueryBuilder } from 'typeorm'
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity'
+import { BaseEntity } from '../entities/base.entity'
+import { PaginatedResult } from '../interfaces/paginated-result' // Assume this interface is defined
 
-export abstract class BaseService<T> {
-  constructor(protected readonly repository: Repository<T>) {}
+export abstract class BaseService<T extends BaseEntity> {
+  constructor(private readonly repository: Repository<T>) {}
 
-  // 抽象方法，要求子类实现，用于获取查询构造器的别名
-  protected abstract getQueryBuilderAlias(): string
+  // Apply customizations to the query builder for specific needs
+  protected abstract applyCustomizations(
+    qb: SelectQueryBuilder<T>
+  ): SelectQueryBuilder<T>
 
-  // 通用分页方法
-  async paginate(
-    page: number = 1,
-    pageSize: number = 10,
-    relations: string[] = []
+  async findAll(
+    page: number,
+    itemPerPage: number,
+    qb?: SelectQueryBuilder<T> // Optional parameter to allow custom qb
   ): Promise<PaginatedResult<T>> {
-    const alias = this.getQueryBuilderAlias()
-    const queryBuilder = this.repository.createQueryBuilder(alias)
+    qb = qb || this.repository.createQueryBuilder()
+    qb = this.applyCustomizations(qb)
+    const totalItemsPromise = qb.getCount()
+    qb.skip(itemPerPage * (page - 1)).take(itemPerPage)
+    const [items, totalItems] = await Promise.all([
+      qb.getMany(),
+      totalItemsPromise
+    ])
+    const pagesCount = Math.ceil(totalItems / itemPerPage)
 
-    // 加载关联关系
-    if (relations.length > 0) {
-      relations.forEach((relation) => {
-        queryBuilder.leftJoinAndSelect(`${alias}.${relation}`, relation)
-      })
-    }
-    return await this.applyPagination(queryBuilder, page, pageSize)
-  }
-
-  protected async applyPagination(
-    queryBuilder: SelectQueryBuilder<T>,
-    page: number = 1,
-    pageSize: number = 10
-  ): Promise<PaginatedResult<T>> {
-    let items: T[]
-    let total: number
-
-    if (pageSize === -1) {
-      // 当 pageSize 为 -1 时，获取所有数据
-      // 在此情况下，不使用 skip 和 take，直接获取所有数据
-      items = await queryBuilder.getMany()
-      total = items.length
-      // 设置 totalPages 为 1，因为所有数据都在一个页面中
-      return {
-        items,
-        meta: {
-          currentPage: 1,
-          pageSize: total,
-          total: total,
-          totalPages: 1
-        }
-      }
-    } else {
-      ;[items, total] = await queryBuilder
-        // 当 pageSize 为正数时，执行分页逻辑
-        .skip((page - 1) * pageSize)
-        .take(pageSize)
-        .getManyAndCount()
-
-      return {
-        items,
-        meta: {
-          currentPage: page,
-          pageSize: pageSize,
-          total: total,
-          totalPages: Math.ceil(total / pageSize)
-        }
+    return {
+      items,
+      meta: {
+        page,
+        itemPerPage,
+        itemsCount: totalItems,
+        pagesCount
       }
     }
   }
 
-  // protected async applyPagination(
-  //   queryBuilder: SelectQueryBuilder<T>,
-  //   page: number = 1,
-  //   pageSize: number = 10
-  // ): Promise<PaginatedResult<T>> {
-  //   const [items, total] = await queryBuilder
-  //     .skip((page - 1) * pageSize)
-  //     .take(pageSize)
-  //     .getManyAndCount()
-
-  //   return {
-  //     items,
-  //     meta: {
-  //       currentPage: page,
-  //       pageSize: pageSize,
-  //       total: total,
-  //       totalPages: Math.ceil(total / pageSize)
-  //     }
-  //   }
-  // }
-
-  async findOne(id: string): Promise<T | null> {
-    return this.repository.findOneBy({ id } as any)
+  async findOne(id: string, qb?: SelectQueryBuilder<T>): Promise<T> {
+    qb = qb || this.repository.createQueryBuilder()
+    qb = this.applyCustomizations(qb)
+    return qb.where({ id } as FindOptionsWhere<T>).getOne()
   }
 
-  async create(data: DeepPartial<T>): Promise<T> {
+  async create(data: T): Promise<T> {
     const entity = this.repository.create(data)
     return this.repository.save(entity)
   }
 
-  async update(id: string, data: any): Promise<T> {
+  async update(id: string, data: QueryDeepPartialEntity<T>): Promise<T> {
     await this.repository.update(id, data)
     return this.findOne(id)
   }
 
-  async remove(id: string): Promise<void> {
+  async delete(id: string): Promise<void> {
     await this.repository.delete(id)
   }
 }

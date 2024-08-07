@@ -1,26 +1,90 @@
-import { Injectable } from '@nestjs/common';
-import { CreateOrganizationDto } from './dto/create-organization.dto';
-import { UpdateOrganizationDto } from './dto/update-organization.dto';
+import { Injectable } from '@nestjs/common'
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm'
+import { DataSource, Like, Repository } from 'typeorm'
+import { Organization } from './entities/organization.entity'
 
 @Injectable()
 export class OrganizationService {
-  create(createOrganizationDto: CreateOrganizationDto) {
-    return 'This action adds a new organization';
+  constructor(
+    @InjectRepository(Organization)
+    private readonly organizationRepository: Repository<Organization>,
+    @InjectDataSource()
+    private readonly dataSource: DataSource // 注入 DataSource
+  ) {}
+
+  async findOne(id: string): Promise<Organization> {
+    // 查找单个组织
+    return await this.organizationRepository.findOne({
+      where: { id }
+    })
   }
 
-  findAll() {
-    return `This action returns all organization`;
+  async create(entity: Organization): Promise<Organization> {
+    // 查找父级组织
+    const parent = await this.organizationRepository.findOne({
+      where: { id: entity.parentId }
+    })
+
+    return await this.dataSource.transaction(
+      async (transactionalEntityManager) => {
+        // 设置组织路径
+        entity.path = parent ? `${parent.path}.${entity.id}` : `${entity.id}`
+        // 保存组织实体
+        const result = await transactionalEntityManager.save(
+          Organization,
+          entity
+        )
+        return result
+      }
+    )
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} organization`;
+  async update(entity: Organization): Promise<Organization> {
+    // 查找现有组织
+    const existingOrganization = await this.organizationRepository.findOne({
+      where: { id: entity.id }
+    })
+
+    if (existingOrganization) {
+      return await this.dataSource.transaction(
+        async (transactionalEntityManager) => {
+          // 更新组织实体
+          Object.assign(existingOrganization, entity)
+          // 保存更新后的组织实体
+          const result = await transactionalEntityManager.save(
+            Organization,
+            existingOrganization
+          )
+          return result
+        }
+      )
+    }
+    return null // 如果没有找到组织，返回 null
   }
 
-  update(id: number, updateOrganizationDto: UpdateOrganizationDto) {
-    return `This action updates a #${id} organization`;
-  }
+  async remove(id: string): Promise<void> {
+    // 查找要删除的组织
+    const organizationToRemove = await this.organizationRepository.findOne({
+      where: { id }
+    })
 
-  remove(id: number) {
-    return `This action removes a #${id} organization`;
+    if (organizationToRemove) {
+      // 查找所有相关组织（包括子组织）
+      const relatedOrganizations = await this.organizationRepository.find({
+        where: { path: Like(`${organizationToRemove.path}%`) }
+      })
+
+      // 按路径长度降序排序
+      relatedOrganizations.sort((a, b) => b.path.length - a.path.length)
+
+      // 执行事务删除
+      await this.dataSource.transaction(async (transactionalEntityManager) => {
+        await Promise.all(
+          relatedOrganizations.map((org) =>
+            transactionalEntityManager.remove(Organization, org)
+          )
+        )
+      })
+    }
   }
 }

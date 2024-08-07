@@ -10,16 +10,14 @@ export class Organization extends BaseEntity {
   type: string
   @Column()
   icon: string
-  @Column({ nullable: true })
-  parentId?: string
   @Column({ nullable: true, type: 'text' })
   path?: string
-  @Column({ nullable: true, type: 'text' })
-  labelPath?: string
-  @ManyToOne(() => Organization, (_) => _.children)
+  @Column({ nullable: true, default: null, name: 'parent_id' })
+  parentId?: string
+  @ManyToOne(() => Organization, (organization) => organization.children)
   parent: Organization
-  @OneToMany(() => Organization, (_) => _.parent)
+  @OneToMany(() => Organization, (organization) => organization.parent)
   children: Organization[]
-  @ManyToMany(() => Account, (_) => _.organizations)
+  @ManyToMany(() => Account, (account) => account.organizations)
   accounts: Account[]
 }
