@@ -4,7 +4,7 @@ import { PaginatedResult } from 'src/shared/interfaces/paginated-result'
 import { BaseService } from 'src/shared/providers/base.service'
 import { DataSource, Like, Repository, SelectQueryBuilder } from 'typeorm'
 import { Action } from '../action/entities/action.entity'
-import { Menu } from './entities/menu.entity'
+import { Menu, MenuRelations } from './entities/menu.entity'
 
 @Injectable()
 export class MenuService extends BaseService<Menu> {
@@ -38,23 +38,29 @@ export class MenuService extends BaseService<Menu> {
     const menu = await this.menuRepo
       .createQueryBuilder('menu')
       .leftJoinAndSelect('menu.children', 'children')
+      .leftJoinAndSelect('menu.actions', 'actions')
+      .leftJoinAndSelect('menu.parent', 'parent')
       .where('menu.id = :id', { id })
       .getOne()
-    console.log(menu)
-    const qb = this.menuRepo.createQueryBuilder('menu')
-    return await super.findOne(id, qb)
+    // const qb = this.menuRepo.createQueryBuilder('menu')
+    // return await super.findOne(id, qb)
+    return menu
   }
   async create(entity: Menu): Promise<Menu> {
+    console.debug('entity', entity)
     // 查找父级菜单
     //! 如果没有的话，那么作为一级菜单
     const parent = entity.parentId
       ? await this.menuRepo.findOne({ where: { id: entity.parentId } })
       : null
 
+    console.debug('parent', parent)
+
     return await this.dataSource.transaction(
       async (transactionalEntityManager) => {
         // 设置菜单路径
         entity.path = parent ? `${parent.path}.${entity.id}` : `${entity.id}`
+        console.debug('path', entity.path)
 
         // 保存菜单实体
         const savedMenu = await transactionalEntityManager.save(Menu, entity)
@@ -82,66 +88,66 @@ export class MenuService extends BaseService<Menu> {
     )
   }
 
-  // async update(entity: Menu): Promise<Menu> {
-  //   // 查找现有菜单及其动作
-  //   const existingMenu = await this.menuRepo.findOne({
-  //     where: { id: entity.id },
-  //     relations: [MenuRelations.Actions]
-  //   })
+  async update(id: string, entity: Menu): Promise<Menu> {
+    // 查找现有菜单及其动作
+    const existingMenu = await this.menuRepo.findOne({
+      where: { id },
+      relations: [MenuRelations.Actions]
+    })
 
-  //   if (existingMenu) {
-  //     return await this.dataSource.transaction(
-  //       async (transactionalEntityManager) => {
-  //         // 找到需要删除、添加和更新的动作
-  //         const removeActions = existingMenu.actions.filter(
-  //           (action) =>
-  //             !entity.actions.some((eAction) => eAction.id === action.id)
-  //         )
-  //         const addActions = entity.actions.filter(
-  //           (action) =>
-  //             !existingMenu.actions.some((eAction) => eAction.id === action.id)
-  //         )
-  //         const updateActions = existingMenu.actions.filter((action) =>
-  //           entity.actions.some((eAction) => eAction.id === action.id)
-  //         )
-  //         // 删除多余的动作
-  //         if (removeActions.length > 0) {
-  //           await transactionalEntityManager.remove(Action, removeActions)
-  //         }
-  //         // 添加新的动作
-  //         if (addActions.length > 0) {
-  //           await Promise.all(
-  //             addActions.map((action) =>
-  //               transactionalEntityManager.save(Action, action)
-  //             )
-  //           )
-  //         }
-  //         // 更新现有的动作
-  //         if (updateActions.length > 0) {
-  //           await Promise.all(
-  //             updateActions.map((action) => {
-  //               const updatedAction = entity.actions.find(
-  //                 (eAction) => eAction.id === action.id
-  //               )
-  //               return transactionalEntityManager.save(Action, {
-  //                 ...action,
-  //                 ...updatedAction
-  //               })
-  //             })
-  //           )
-  //         }
-  //         // 更新菜单
-  //         Object.assign(existingMenu, entity)
-  //         const result = await transactionalEntityManager.save(
-  //           Menu,
-  //           existingMenu
-  //         )
-  //         return result
-  //       }
-  //     )
-  //   }
-  //   return null // 如果没有找到菜单，返回 null
-  // }
+    if (existingMenu) {
+      return await this.dataSource.transaction(
+        async (transactionalEntityManager) => {
+          // 找到需要删除、添加和更新的动作
+          const removeActions = existingMenu.actions.filter(
+            (action) =>
+              !entity.actions.some((eAction) => eAction.id === action.id)
+          )
+          const addActions = entity.actions.filter(
+            (action) =>
+              !existingMenu.actions.some((eAction) => eAction.id === action.id)
+          )
+          const updateActions = existingMenu.actions.filter((action) =>
+            entity.actions.some((eAction) => eAction.id === action.id)
+          )
+          // 删除多余的动作
+          if (removeActions.length > 0) {
+            await transactionalEntityManager.remove(Action, removeActions)
+          }
+          // 添加新的动作
+          if (addActions.length > 0) {
+            await Promise.all(
+              addActions.map((action) =>
+                transactionalEntityManager.save(Action, action)
+              )
+            )
+          }
+          // 更新现有的动作
+          if (updateActions.length > 0) {
+            await Promise.all(
+              updateActions.map((action) => {
+                const updatedAction = entity.actions.find(
+                  (eAction) => eAction.id === action.id
+                )
+                return transactionalEntityManager.save(Action, {
+                  ...action,
+                  ...updatedAction
+                })
+              })
+            )
+          }
+          // 更新菜单
+          Object.assign(existingMenu, entity)
+          const result = await transactionalEntityManager.save(
+            Menu,
+            existingMenu
+          )
+          return result
+        }
+      )
+    }
+    return null // 如果没有找到菜单，返回 null
+  }
 
   async remove(id: string): Promise<void> {
     // 查找要删除的菜单

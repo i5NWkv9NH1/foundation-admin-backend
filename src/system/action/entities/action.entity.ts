@@ -17,7 +17,7 @@ export class Action extends BaseEntity {
   @Column('uuid', { name: 'menu_id' })
   menuId: string
 
-  @ManyToOne(() => Menu, (_) => _.actions)
+  @ManyToOne(() => Menu, (_) => _.actions, { onDelete: 'CASCADE' })
   // TODO: find menu by id load relation
   @JoinColumn({ name: 'menu_id' })
   menu: Menu

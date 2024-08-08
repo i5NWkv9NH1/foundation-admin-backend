@@ -18,10 +18,10 @@ import { BusinessModule } from './modules/business.module'
       imports: [ConfigModule],
       useClass: TypeOrmConfigService
     }),
-    RedisModule.forRootAsync({
-      imports: [ConfigModule],
-      useClass: RedisConfigService
-    }),
+//    RedisModule.forRootAsync({
+//      imports: [ConfigModule],
+//      useClass: RedisConfigService
+//    }),
     ElasticsearchModule.registerAsync({
       imports: [ConfigModule],
       useClass: ElasticsearchConfigService

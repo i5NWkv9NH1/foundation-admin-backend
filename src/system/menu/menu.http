@@ -1,0 +1,3 @@
+@host = http://localhost:3200/api/system
+
+GET {{host}}/menus
