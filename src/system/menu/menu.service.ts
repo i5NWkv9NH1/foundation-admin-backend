@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common'
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm'
-import { PaginatedResult } from 'src/shared/interfaces/paginated-result'
 import { BaseService } from 'src/shared/providers/base.service'
 import { DataSource, Like, Repository, SelectQueryBuilder } from 'typeorm'
 import { Action } from '../action/entities/action.entity'
@@ -17,6 +16,9 @@ export class MenuService extends BaseService<Menu> {
     super(menuRepo)
   }
 
+  protected createQueryBuilder(): SelectQueryBuilder<Menu> {
+    return this.menuRepo.createQueryBuilder('menu')
+  }
   protected applyCustomizations(
     qb: SelectQueryBuilder<Menu>
   ): SelectQueryBuilder<Menu> {
@@ -25,13 +27,14 @@ export class MenuService extends BaseService<Menu> {
       .leftJoinAndSelect('menu.children', 'children')
       .leftJoinAndSelect('menu.actions', 'actions')
   }
-
-  async findAll(
-    page: number,
-    itemPerPage: number
-  ): Promise<PaginatedResult<Menu>> {
-    const qb = this.menuRepo.createQueryBuilder('menu')
-    return await super.findAll(page, itemPerPage, qb)
+  protected applyFilters(
+    qb: SelectQueryBuilder<Menu>,
+    filters: Record<string, any>
+  ): void {
+    Object.keys(filters).forEach((key) => {
+      const value = filters[key]
+      qb.andWhere(`menu.${key} LIKE :${key}`, { [key]: `%${value}%` })
+    })
   }
 
   async findOne(id: string): Promise<Menu> {
@@ -46,6 +49,7 @@ export class MenuService extends BaseService<Menu> {
     // return await super.findOne(id, qb)
     return menu
   }
+
   async create(entity: Menu): Promise<Menu> {
     console.debug('entity', entity)
     // 查找父级菜单

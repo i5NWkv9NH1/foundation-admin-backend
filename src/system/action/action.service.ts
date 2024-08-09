@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { PaginatedResult } from 'src/shared/interfaces/paginated-result'
 import { BaseService } from 'src/shared/providers/base.service'
 import { Repository, SelectQueryBuilder } from 'typeorm'
 import { Action } from './entities/action.entity'
@@ -14,17 +13,21 @@ export class ActionService extends BaseService<Action> {
     super(repo)
   }
 
+  protected createQueryBuilder(): SelectQueryBuilder<Action> {
+    return this.repo.createQueryBuilder('action')
+  }
   protected applyCustomizations(
     qb: SelectQueryBuilder<Action>
   ): SelectQueryBuilder<Action> {
     return qb.orderBy('action.menuId', 'DESC')
   }
-
-  async findAll(
-    page: number,
-    itemPerPage: number
-  ): Promise<PaginatedResult<Action>> {
-    const qb = this.repo.createQueryBuilder('action')
-    return await super.findAll(page, itemPerPage, qb)
+  protected applyFilters(
+    qb: SelectQueryBuilder<Action>,
+    filters: Record<string, any>
+  ): void {
+    Object.keys(filters).forEach((key) => {
+      const value = filters[key]
+      qb.andWhere(`action.${key} LIKE :${key}`, { [key]: `%${value}%` })
+    })
   }
 }

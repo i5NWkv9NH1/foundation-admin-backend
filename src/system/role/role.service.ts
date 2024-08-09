@@ -1,9 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { PaginatedResult } from 'src/shared/interfaces/paginated-result'
 import { BaseService } from 'src/shared/providers/base.service'
 import { Repository, SelectQueryBuilder } from 'typeorm'
-import { CreateRoleDto } from './dto/create-role.dto'
 import { Role } from './entities/role.entity'
 
 @Injectable()
@@ -14,6 +12,18 @@ export class RoleService extends BaseService<Role> {
   ) {
     super(roleRepo)
   }
+  protected createQueryBuilder(): SelectQueryBuilder<Role> {
+    return this.roleRepo.createQueryBuilder('role')
+  }
+  protected applyFilters(
+    qb: SelectQueryBuilder<Role>,
+    filters: Record<string, any>
+  ): void {
+    Object.keys(filters).forEach((key) => {
+      const value = filters[key]
+      qb.andWhere(`organization.${key} LIKE :${key}`, { [key]: `%${value}%` })
+    })
+  }
 
   protected applyCustomizations(
     qb: SelectQueryBuilder<Role>
@@ -21,21 +31,5 @@ export class RoleService extends BaseService<Role> {
     return qb
       .leftJoinAndSelect('role.accounts', 'account')
       .leftJoinAndSelect('role.actions', 'action')
-  }
-
-  async findAll(
-    page: number,
-    itemPerPage: number
-  ): Promise<PaginatedResult<Role>> {
-    const qb = this.roleRepo.createQueryBuilder('role')
-    return await super.findAll(page, itemPerPage, qb)
-  }
-
-  async findOne(id: string): Promise<Role> {
-    const qb = this.roleRepo.createQueryBuilder('role')
-    return await super.findOne(id, qb)
-  }
-  async create(createRoleDto: CreateRoleDto) {
-    return this.roleRepo.create(createRoleDto)
   }
 }

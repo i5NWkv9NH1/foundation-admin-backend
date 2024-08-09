@@ -15,7 +15,7 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
       password: this.configService.get<string>('POSTGRES_PASSWORD'),
       database: this.configService.get<string>('POSTGRES_DB'),
       autoLoadEntities: true,
-      logging: 'all',
+      // logging: 'all',
       synchronize: true, // 仅在开发环境中使用，生产环境中建议关闭
       // @ts-ignore
       seeds: ['src/seeds/**/*{.ts,.js}'],

@@ -1,4 +1,4 @@
-import { Body, Delete, Get, Param, Post, Put, Query } from '@nestjs/common'
+import { Body, Delete, Get, Param, Post, Put } from '@nestjs/common'
 import { SystemController } from 'src/shared/decorators'
 import { BaseController } from 'src/shared/providers/base.controller'
 import { Menu } from './entities/menu.entity'
@@ -8,14 +8,6 @@ import { MenuService } from './menu.service'
 export class MenuController extends BaseController<Menu> {
   constructor(private readonly menuService: MenuService) {
     super(menuService)
-  }
-
-  @Get()
-  async findAll(
-    @Query('page') page: number = 1,
-    @Query('itemsPerPage') itemsPerPage: number = 10
-  ) {
-    return await this.menuService.findAll(page, itemsPerPage)
   }
 
   @Get(':id')

@@ -1,61 +1,75 @@
-import { Repository, SelectQueryBuilder } from 'typeorm'
+import { Logger } from '@nestjs/common'
+import { DeepPartial, Repository, SelectQueryBuilder } from 'typeorm'
 import { BaseEntity } from '../entities/base.entity'
-import { PaginatedResult } from '../interfaces/paginated-result' // Assume this interface is defined
 
 export abstract class BaseService<T extends BaseEntity> {
+  protected readonly logger = new Logger(BaseService.name)
   constructor(private readonly repository: Repository<T>) {}
 
-  // Apply customizations to the query builder for specific needs
+  // 抽象方法：子类实现自定义的查询构建器
+  protected abstract createQueryBuilder(): SelectQueryBuilder<T>
+  // 抽象方法：子类实现自定义的查询逻辑
   protected abstract applyCustomizations(
     qb: SelectQueryBuilder<T>
   ): SelectQueryBuilder<T>
+  // 抽象方法：子类实现自定义的过滤逻辑
+  protected abstract applyFilters(
+    qb: SelectQueryBuilder<T>,
+    filters: Record<string, any>
+  ): void
 
   async findAll(
-    page: number,
-    itemPerPage: number,
-    qb?: SelectQueryBuilder<T> // Optional parameter to allow custom qb
-  ): Promise<PaginatedResult<T>> {
-    qb = qb || this.repository.createQueryBuilder().orderBy('createdAt', 'DESC')
-    qb = this.applyCustomizations(qb)
-    const totalItemsPromise = qb.getCount()
-    qb.skip(itemPerPage * (page - 1)).take(itemPerPage)
-    const [items, totalItems] = await Promise.all([
-      qb.getMany(),
-      totalItemsPromise
-    ])
-    const pagesCount = Math.ceil(totalItems / itemPerPage)
+    page: number = 1,
+    itemsPerPage: number = 10,
+    filters: Record<string, any> = {}
+  ) {
+    const qb = this.createQueryBuilder()
+    this.applyCustomizations(qb)
+    this.applyFilters(qb, filters)
+
+    const totalItems = await qb.getCount()
+    const skip = itemsPerPage > 0 ? (page - 1) * itemsPerPage : 0
+    const take = itemsPerPage > 0 ? itemsPerPage : totalItems
+    const items = await qb.skip(skip).take(take).getMany()
 
     return {
       items,
       meta: {
         page,
-        itemPerPage,
+        itemsPerPage,
         itemsCount: totalItems,
-        pagesCount
+        pagesCount: Math.ceil(totalItems / itemsPerPage)
       }
     }
   }
 
-  async findOne(id: string, qb?: SelectQueryBuilder<T>): Promise<T> {
-    qb = qb || this.repository.createQueryBuilder()
-    qb = this.applyCustomizations(qb)
-    // return qb.where({ id } as FindOptionsWhere<T>).getOne()
-    // return qb.where('.id = :id', { id }).getOne()
-    // @ts-ignore
-    return await this.repository.findOne({ where: { id } })
+  async findOne(id: string): Promise<T> {
+    // return await this.repository.findOne({
+    //   where: {
+    //     id
+    //   } as FindOptionsWhere<T>
+    // })
+    const qb = this.createQueryBuilder()
+    this.applyCustomizations(qb)
+    return qb.getOne()
   }
 
-  // async create(data: T): Promise<T> {
-  //   const entity = this.repository.create(data)
-  //   return this.repository.save(entity)
-  // }
+  async create(entity: T): Promise<T> {
+    const item = this.repository.create(entity)
+    return await this.repository.save(item)
+  }
 
-  // async update(id: string, data: QueryDeepPartialEntity<T>): Promise<T> {
-  //   await this.repository.update(id, data)
-  //   return this.findOne(id)
-  // }
+  async update(id: string, entity: DeepPartial<T>) {
+    const item = await this.repository.preload({
+      id,
+      ...entity
+    })
+    if (!item) return
+    Object.assign(item, entity)
+    return await this.repository.save(entity)
+  }
 
-  // async delete(id: string): Promise<void> {
-  //   await this.repository.delete(id)
-  // }
+  async delete(id: string): Promise<void> {
+    await this.repository.delete(id)
+  }
 }
