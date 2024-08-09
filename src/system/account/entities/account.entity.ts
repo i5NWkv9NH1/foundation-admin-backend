@@ -24,7 +24,7 @@ export class Account extends BaseEntity {
   @Column({ nullable: false, unique: true })
   username: string
 
-  @Column({ nullable: true, name: 'avatar_url' })
+  @Column({ nullable: true, name: 'avatarUrl' })
   avatarUrl: string
 
   @Column({ type: 'enum', enum: Gender, nullable: false })
@@ -62,7 +62,7 @@ export class Account extends BaseEntity {
   @ManyToMany(() => Organization, (organization) => organization)
   @JoinTable({
     name: 'sys_account_organization', // 中间表名称
-    joinColumn: { name: 'accountIdd' }, // 当前实体的连接字段
+    joinColumn: { name: 'accountId' }, // 当前实体的连接字段
     inverseJoinColumn: { name: 'organizationId' } // 关联实体的连接字段
   })
   organizations: Organization[]

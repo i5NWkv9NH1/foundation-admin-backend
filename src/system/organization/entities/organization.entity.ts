@@ -24,7 +24,7 @@ export enum TypeEnum {
 @Entity('sys_organization')
 export class Organization extends BaseEntity {
   @Column()
-  label: string
+  name: string
 
   @Index()
   @Column({ unique: true })

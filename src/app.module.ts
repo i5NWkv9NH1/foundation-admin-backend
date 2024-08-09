@@ -5,7 +5,6 @@ import { ElasticsearchModule } from '@nestjs/elasticsearch'
 import { ThrottlerModule } from '@nestjs/throttler'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { LoggerModule } from 'nestjs-pino'
-import { ThrottlerStorageRedisService } from 'nestjs-throttler-storage-redis'
 import { ElasticsearchConfigService } from './elasticsearch-config.service' // 下面会创建
 import { BusinessModule } from './modules/business.module'
 import { RedisConfigService } from './redis-config.service'
@@ -42,8 +41,8 @@ import { TypeOrmConfigService } from './typeorm-config.service' // 下面会创�
             ttl: config.get('THROTTLE_TTL') || 60,
             limit: config.get('THROTTLE_LIMIT') || 5
           }
-        ],
-        storage: new ThrottlerStorageRedisService(config.get('REDIS_URL'))
+        ]
+        // storage: new ThrottlerStorageRedisService(config.get('REDIS_URL'))
       })
     }),
     // ThrottlerModule.forRoot([
