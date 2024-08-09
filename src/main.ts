@@ -8,6 +8,8 @@ async function bootstrap() {
   app.enableCors({
     origin: true
   })
+  // 需要依赖注入
+  // app.useGlobalFilters(new SystemExceptionFilter())
   app.useGlobalPipes(
     new ValidationPipe({
       // transform: true

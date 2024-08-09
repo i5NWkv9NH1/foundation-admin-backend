@@ -11,6 +11,7 @@ import {
   Query
 } from '@nestjs/common'
 import { DeepPartial } from 'typeorm'
+import { Public } from '../decorators'
 import { BaseEntity } from '../entities/base.entity'
 import { BaseService } from './base.service'
 
@@ -19,6 +20,7 @@ export abstract class BaseController<T extends BaseEntity> {
   constructor(protected readonly service: BaseService<T>) {}
 
   @Get()
+  @Public()
   async findAll(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('itemsPerPage', new DefaultValuePipe(-1), ParseIntPipe)

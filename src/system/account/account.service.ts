@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { BaseService } from 'src/shared/providers/base.service'
 import { Repository, SelectQueryBuilder } from 'typeorm'
+import { Action } from '../action/entities/action.entity'
 import { Role } from '../role/entities/role.entity'
 import { Account } from './entities/account.entity'
 
@@ -9,14 +10,16 @@ import { Account } from './entities/account.entity'
 export class AccountService extends BaseService<Account> {
   constructor(
     @InjectRepository(Account)
-    private readonly accountsRepository: Repository<Account>
+    private readonly accountRepository: Repository<Account>,
+    @InjectRepository(Action)
+    private actionRepository: Repository<Action>
   ) {
-    super(accountsRepository)
+    super(accountRepository)
   }
 
   // 创建查询构建器，定义表的别名
   protected createQueryBuilder(): SelectQueryBuilder<Account> {
-    return this.accountsRepository.createQueryBuilder('account')
+    return this.accountRepository.createQueryBuilder('account')
   }
   // 应用自定义的查询逻辑
   // ? 不设置全局
@@ -79,10 +82,34 @@ export class AccountService extends BaseService<Account> {
   }
 
   async getUserRoles(id: string): Promise<Role[]> {
-    const account = await this.accountsRepository.findOne({
+    const account = await this.accountRepository.findOne({
       where: { id },
       relations: ['roles']
     })
     return account.roles
+  }
+
+  async getAllowActions(accountId: string): Promise<string[]> {
+    const account = await this.accountRepository.findOne({
+      where: { id: accountId },
+      relations: ['roles', 'roles.actions']
+    })
+
+    if (!account) {
+      throw new NotFoundException('Account not found')
+    }
+
+    const allowedActions = new Set<string>()
+    account.roles.forEach((role) => {
+      role.actions.forEach((action) => {
+        allowedActions.add(action.code)
+      })
+    })
+
+    return Array.from(allowedActions)
+  }
+
+  async findByUsername(username: string) {
+    return await this.accountRepository.findOne({ where: { username } })
   }
 }

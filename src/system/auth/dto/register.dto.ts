@@ -1,7 +1,7 @@
 import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator'
-import { Gender, StatusEnum } from '../entities/account.entity'
+import { Gender, StatusEnum } from 'src/system/account/entities/account.entity'
 
-export class CreateAccountDto {
+export class RegisterDto {
   @IsString()
   @IsNotEmpty()
   name: string

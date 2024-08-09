@@ -11,11 +11,14 @@ import {
   Catch,
   ExceptionFilter,
   HttpException,
-  HttpStatus
+  HttpStatus,
+  Inject,
+  Injectable
 } from '@nestjs/common'
 import { QueryFailedError } from 'typeorm'
 import { SystemHttpExceptionFilter } from './system-http-exception.filter'
 
+@Injectable()
 @Catch(HttpException, QueryFailedError)
 export class SystemExceptionFilter implements ExceptionFilter {
   /**
@@ -23,7 +26,11 @@ export class SystemExceptionFilter implements ExceptionFilter {
    *
    * @param {SystemHttpExceptionFilter} systemFilter - An instance of `SystemHttpExceptionFilter`.
    */
-  constructor(private readonly systemFilter: SystemHttpExceptionFilter) {}
+  // constructor(private readonly systemFilter: SystemHttpExceptionFilter) {}
+  constructor(
+    @Inject(SystemHttpExceptionFilter)
+    private readonly systemFilter: SystemHttpExceptionFilter
+  ) {}
 
   /**
    * **catch** method handles exceptions and formats the response based on the exception type.
@@ -32,6 +39,7 @@ export class SystemExceptionFilter implements ExceptionFilter {
    * @param {ArgumentsHost} host - The context in which the exception was thrown.
    */
   catch(exception: HttpException | QueryFailedError, host: ArgumentsHost) {
+    console.log(exception.name)
     if (exception instanceof QueryFailedError) {
       // Handle TypeORM exceptions
       const ctx = host.switchToHttp()

@@ -3,7 +3,8 @@ import {
   ArgumentsHost,
   Catch,
   ExceptionFilter,
-  HttpException
+  HttpException,
+  Injectable
 } from '@nestjs/common'
 import { Request, Response } from 'express'
 /**
@@ -22,6 +23,7 @@ import { Request, Response } from 'express'
  * })
  * export class AppModule {}
  */
+@Injectable()
 @Catch(HttpException)
 export class SystemHttpExceptionFilter implements ExceptionFilter {
   /**

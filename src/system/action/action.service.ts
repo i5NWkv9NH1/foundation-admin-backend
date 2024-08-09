@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { BaseService } from 'src/shared/providers/base.service'
-import { Repository, SelectQueryBuilder } from 'typeorm'
+import { In, Repository, SelectQueryBuilder } from 'typeorm'
 import { Action } from './entities/action.entity'
 
 @Injectable()
@@ -28,6 +28,12 @@ export class ActionService extends BaseService<Action> {
     Object.keys(filters).forEach((key) => {
       const value = filters[key]
       qb.andWhere(`action.${key} LIKE :${key}`, { [key]: `%${value}%` })
+    })
+  }
+
+  async findActionsByIds(ids: string[]): Promise<Action[]> {
+    return this.repo.findBy({
+      id: In(ids)
     })
   }
 }
