@@ -2,6 +2,8 @@ import { ValidationPipe } from '@nestjs/common'
 import { NestFactory } from '@nestjs/core'
 import { Logger } from 'nestjs-pino'
 import { AppModule } from './app.module'
+import { GlobalExceptionFilter } from './shared/filters/global-exception.filter'
+import { GlobalInterceptor } from './shared/interceptors/global.interceptor'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -19,7 +21,8 @@ async function bootstrap() {
     })
   )
   app.useLogger(app.get(Logger))
-  // app.useGlobalFilters(new GlobalExceptionFilter())
+  app.useGlobalInterceptors(new GlobalInterceptor())
+  app.useGlobalFilters(new GlobalExceptionFilter())
   app.setGlobalPrefix('api')
   await app.listen(3200)
 }

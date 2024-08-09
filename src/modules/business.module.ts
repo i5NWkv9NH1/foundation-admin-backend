@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common'
+import { CaptchaModule } from './captcha/captcha.module'
 
 @Module({
-  imports: []
+  imports: [CaptchaModule]
 })
 export class BusinessModule {}

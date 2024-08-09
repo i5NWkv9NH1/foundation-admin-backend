@@ -1,10 +1,13 @@
-import { Body, Delete, Get, Param, Post, Put } from '@nestjs/common'
+import { Body, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common'
 import { SystemController } from 'src/shared/decorators'
 import { BaseController } from 'src/shared/providers/base.controller'
 import { Menu } from './entities/menu.entity'
 import { MenuService } from './menu.service'
+import { JwtAuthGuard } from '../auth/jwt-auth.guard'
+import { RolesGuard } from '../auth/roles.guard'
 
 @SystemController('menus')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class MenuController extends BaseController<Menu> {
   constructor(private readonly menuService: MenuService) {
     super(menuService)
