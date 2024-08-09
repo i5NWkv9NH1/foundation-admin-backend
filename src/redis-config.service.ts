@@ -1,6 +1,6 @@
+import { RedisModuleOptions } from '@liaoliaots/nestjs-redis'
 import { Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { RedisModuleOptions } from '@liaoliaots/nestjs-redis'
 
 @Injectable()
 export class RedisConfigService {
@@ -10,7 +10,11 @@ export class RedisConfigService {
     return {
       config: {
         host: this.configService.get<string>('REDIS_HOST'),
-        port: this.configService.get<number>('REDIS_PORT')
+        port: this.configService.get<number>('REDIS_PORT'),
+        db: 0,
+        lazyConnect: true,
+        connectTimeout: 5000,
+        maxRetriesPerRequest: 3
       }
     }
   }

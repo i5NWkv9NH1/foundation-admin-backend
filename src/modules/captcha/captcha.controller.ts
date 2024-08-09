@@ -6,8 +6,10 @@ import {
   HttpStatus,
   Post,
   Query,
-  Res
+  Res,
+  UseGuards
 } from '@nestjs/common'
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler'
 import { Response } from 'express'
 import { CaptchaService } from './captcha.service'
 
@@ -16,6 +18,10 @@ export class CaptchaController {
   constructor(private readonly captchaService: CaptchaService) {}
 
   @Get('generate')
+  @UseGuards(ThrottlerGuard)
+  @Throttle({
+    default: { limit: 5, ttl: 60 }
+  }) // 每60秒最多请求5次
   async generateCaptcha(
     @Query('uniqueId') uniqueId: string,
     @Res() res: Response
