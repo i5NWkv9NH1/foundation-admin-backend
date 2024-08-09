@@ -17,18 +17,13 @@ export class Role extends BaseEntity {
   code: string
 
   @ManyToMany(() => Account, (_) => _.roles)
-  @JoinTable({
-    name: 'sys_account_role',
-    joinColumn: { name: 'role_id' },
-    inverseJoinColumn: { name: 'account_id' }
-  })
   accounts: Account[]
 
   @ManyToMany(() => Action, (_) => _.roles)
   @JoinTable({
     name: 'sys_role_action',
-    joinColumn: { name: 'role_id' },
-    inverseJoinColumn: { name: 'action_id' }
+    joinColumn: { name: 'roleId' },
+    inverseJoinColumn: { name: 'actionId' }
   })
   actions: Action[]
 }

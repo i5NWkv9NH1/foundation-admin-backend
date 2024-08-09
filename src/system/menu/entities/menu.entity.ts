@@ -12,23 +12,41 @@ import {
 export enum MenuRelations {
   Actions = 'actions'
 }
+export enum TypeEnum {
+  CATALOG = 'CATALOG',
+  MENU = 'MENU',
+  BUTTON = 'BUTTON'
+}
 
 @Entity('sys_menu')
 export class Menu extends BaseEntity {
   @Column()
-  label: string
-
+  name: string
   @Index()
   @Column({ unique: true })
   router: string
-
   @Column()
   icon: string
-
   @Column({ nullable: true, type: 'text' })
   path?: string
   @Column({ nullable: true, name: 'parent_id' })
-  parentId?: string
+  parentId: string | null
+  @Column({ nullable: true })
+  component: string | null
+  @Column({ nullable: true })
+  redirect: string | null
+  @Column({
+    type: 'enum',
+    enum: TypeEnum,
+    default: TypeEnum.CATALOG
+  })
+  type: TypeEnum
+
+  @Column({
+    type: 'int',
+    default: 0
+  })
+  sort: number
 
   @ManyToOne(() => Menu, (menu) => menu.children, { nullable: true })
   @JoinColumn({ name: 'parent_id' })

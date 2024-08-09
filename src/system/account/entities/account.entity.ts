@@ -11,9 +11,9 @@ export enum Gender {
   MALE = 'MALE',
   FEMALE = 'FEMALE'
 }
-export enum State {
-  NORMAL = 'NORMAL',
-  LOCKED = 'LOCKED'
+export enum StatusEnum {
+  DISABLE = 'DISABLE',
+  ENABLE = 'ENABLE'
 }
 @Entity('sys_account')
 export class Account extends BaseEntity {
@@ -30,8 +30,13 @@ export class Account extends BaseEntity {
   @Column({ type: 'enum', enum: Gender, nullable: false })
   gender: Gender
 
-  @Column({ type: 'enum', enum: State, nullable: false })
-  state: State
+  @Column({
+    type: 'enum',
+    enum: StatusEnum,
+    nullable: false,
+    default: StatusEnum.ENABLE
+  })
+  state: StatusEnum
 
   @Column({ nullable: true })
   phone?: string
@@ -46,19 +51,19 @@ export class Account extends BaseEntity {
   @Column({ nullable: true, unique: true })
   email?: string
 
-  @ManyToMany(() => Role)
+  @ManyToMany(() => Role, (role) => role)
   @JoinTable({
     name: 'sys_account_role',
-    joinColumn: { name: 'account_id' },
-    inverseJoinColumn: { name: 'role_id' }
+    joinColumn: { name: 'accountId' },
+    inverseJoinColumn: { name: 'roleId' }
   })
   roles: Role[]
 
-  @ManyToMany(() => Organization)
+  @ManyToMany(() => Organization, (organization) => organization)
   @JoinTable({
-    name: 'sys_account_organization',
-    joinColumn: { name: 'account_id' },
-    inverseJoinColumn: { name: 'organization_id' }
+    name: 'sys_account_organization', // 中间表名称
+    joinColumn: { name: 'accountIdd' }, // 当前实体的连接字段
+    inverseJoinColumn: { name: 'organizationId' } // 关联实体的连接字段
   })
   organizations: Organization[]
 }

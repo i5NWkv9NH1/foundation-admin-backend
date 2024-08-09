@@ -23,7 +23,7 @@ export abstract class BaseController<T extends BaseEntity> {
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('itemsPerPage', new DefaultValuePipe(-1), ParseIntPipe)
     itemsPerPage: number,
-    @Query('filters') filters: string = '{}'
+    @Query('filters', new DefaultValuePipe('{}')) filters: string
   ) {
     return await this.service.findAll(page, itemsPerPage, JSON.parse(filters))
   }

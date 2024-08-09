@@ -5,11 +5,21 @@ import {
   Entity,
   Index,
   JoinColumn,
-  JoinTable,
   ManyToMany,
   ManyToOne,
   OneToMany
 } from 'typeorm'
+
+export enum StatusEnum {
+  DISABLE = 'DISABLE',
+  ENABLE = 'ENABLE'
+}
+export enum TypeEnum {
+  GROUP = 'GROUP',
+  DEPARTMENT = 'DEPARTMENT',
+  COMPANY = 'COMPANY'
+  // other types as needed
+}
 
 @Entity('sys_organization')
 export class Organization extends BaseEntity {
@@ -20,8 +30,25 @@ export class Organization extends BaseEntity {
   @Column({ unique: true })
   code: string
 
-  @Column()
-  type: string
+  @Column({
+    type: 'enum',
+    enum: TypeEnum,
+    default: TypeEnum.GROUP
+  })
+  type: TypeEnum
+
+  @Column({
+    type: 'enum',
+    enum: StatusEnum,
+    default: StatusEnum.DISABLE
+  })
+  status: StatusEnum
+
+  @Column({
+    type: 'int',
+    default: 0
+  })
+  sort: number
 
   @Column()
   icon: string
@@ -40,10 +67,5 @@ export class Organization extends BaseEntity {
   children: Organization[]
 
   @ManyToMany(() => Account, (account) => account.organizations)
-  @JoinTable({
-    name: 'sys_account_organization',
-    joinColumn: { name: 'organization_id' },
-    inverseJoinColumn: { name: 'account_id' }
-  })
   accounts: Account[]
 }
