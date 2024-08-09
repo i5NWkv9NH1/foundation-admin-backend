@@ -3,7 +3,9 @@ import {
   Body,
   Controller,
   Get,
+  HttpStatus,
   Post,
+  Query,
   Res
 } from '@nestjs/common'
 import { Response } from 'express'
@@ -13,28 +15,35 @@ import { CaptchaService } from './captcha.service'
 export class CaptchaController {
   constructor(private readonly captchaService: CaptchaService) {}
 
-  @Get()
-  async getCaptcha(@Res() res: Response) {
-    const captcha = await this.captchaService.generateCaptcha()
-    res.setHeader('Content-Type', 'image/svg+xml')
-    res.setHeader('Captcha-Id', captcha.captchaId)
-    res.send(captcha.data)
-  }
-
-  @Post('verify')
-  async verifyCaptcha(
-    @Body('captchaId') captchaId: string,
-    @Body('captcha') captcha: string
+  @Get('generate')
+  async generateCaptcha(
+    @Query('uniqueId') uniqueId: string,
+    @Res() res: Response
   ) {
-    const isValid = await this.captchaService.validateCaptcha(
-      captchaId,
-      captcha
-    )
-
-    if (!isValid) {
-      throw new BadRequestException('Invalid CAPTCHA')
+    if (!uniqueId) {
+      throw new BadRequestException('uniqueId is required')
     }
 
-    return { message: 'CAPTCHA is valid' }
+    const captchaSvg = await this.captchaService.generateCaptcha(uniqueId)
+    res.set('Content-Type', 'image/svg+xml')
+    res.send(captchaSvg)
+  }
+
+  @Post('validate')
+  async validateCaptcha(
+    @Body() body: { uniqueId: string; captcha: string },
+    @Res() res: Response
+  ) {
+    const { uniqueId, captcha } = body
+    if (!uniqueId || !captcha) {
+      throw new BadRequestException('uniqueId and captcha are required')
+    }
+    const isValid = await this.captchaService.validateCaptcha(uniqueId, captcha)
+
+    if (isValid) {
+      res.status(HttpStatus.OK).send({ message: 'Captcha valid' })
+    } else {
+      res.status(HttpStatus.BAD_REQUEST).send({ message: 'Invalid captcha' })
+    }
   }
 }

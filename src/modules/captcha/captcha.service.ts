@@ -2,39 +2,40 @@ import { InjectRedis } from '@liaoliaots/nestjs-redis'
 import { Injectable } from '@nestjs/common'
 import Redis from 'ioredis'
 import * as svgCaptcha from 'svg-captcha'
-import { v4 as uuidv4 } from 'uuid'
 
 @Injectable()
 export class CaptchaService {
-  constructor(
-    @InjectRedis()
-    private readonly redis: Redis
-  ) {}
+  private readonly captchaExpire = 5 * 60 // 5 minutes expiration time
 
-  async generateCaptcha(expire: number = 300) {
+  constructor(@InjectRedis() private readonly redisService: Redis) {}
+
+  async generateCaptcha(uniqueId: string): Promise<string> {
     const captcha = svgCaptcha.create()
-    const captchaId = uuidv4()
-    // Store captcha text in Redis with an expiration time
-    await this.redis.set(captchaId, captcha.text, 'EX', expire) // 300 seconds = 5 minutes
+    const captchaKey = `captcha:${uniqueId}`
 
-    return {
-      captchaId,
-      data: captcha.data
-    }
+    // Store captcha text in Redis with expiration
+    await this.redisService.setex(captchaKey, this.captchaExpire, captcha.text)
+
+    // Return captcha SVG
+    return captcha.data
   }
 
   async validateCaptcha(
-    captchaId: string,
-    userInput: string
+    uniqueId: string,
+    inputCaptcha: string
   ): Promise<boolean> {
-    const storedCaptcha = await this.redis.get(captchaId)
+    const captchaKey = `captcha:${uniqueId}`
+    const storedCaptcha = await this.redisService.get(captchaKey)
 
-    if (storedCaptcha && storedCaptcha === userInput) {
-      // CAPTCHA is valid, delete it from Redis
-      await this.redis.del(captchaId)
-      return true
+    if (storedCaptcha === null) {
+      return false // Captcha expired or does not exist
     }
 
-    return false
+    const isValid = storedCaptcha === inputCaptcha
+    if (isValid) {
+      await this.redisService.del(captchaKey) // Remove captcha after successful validation
+    }
+
+    return isValid
   }
 }
