@@ -23,16 +23,19 @@ export class RoleService extends BaseService<Role> {
   ): void {
     Object.keys(filters).forEach((key) => {
       const value = filters[key]
-      qb.andWhere(`organization.${key} LIKE :${key}`, { [key]: `%${value}%` })
+      qb.andWhere(`role.${key} LIKE :${key}`, { [key]: `%${value}%` })
     })
   }
 
   protected applyCustomizations(
     qb: SelectQueryBuilder<Role>
   ): SelectQueryBuilder<Role> {
-    return qb
-      .leftJoinAndSelect('role.accounts', 'account')
-      .leftJoinAndSelect('role.actions', 'action')
+    return (
+      qb
+        //
+        .leftJoinAndSelect('role.accounts', 'account')
+        .leftJoinAndSelect('role.actions', 'action')
+    )
   }
 
   async findRoles(): Promise<Role[]> {

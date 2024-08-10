@@ -27,10 +27,13 @@ export class AccountService extends BaseService<Account> {
   protected applyCustomizations(
     qb: SelectQueryBuilder<Account>
   ): SelectQueryBuilder<Account> {
-    return qb
-    // .leftJoinAndSelect('account.organizations', 'organization')
-    // .leftJoinAndSelect('account.roles', 'role')
-    // .orderBy('account.createdAt', 'DESC')
+    return (
+      qb
+        //
+        .leftJoinAndSelect('account.organizations', 'organization')
+        .leftJoinAndSelect('account.roles', 'role')
+      // .orderBy('account.createdAt', 'DESC')
+    )
   }
 
   // 自定义过滤逻辑

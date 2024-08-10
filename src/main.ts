@@ -1,6 +1,5 @@
 import { ValidationPipe } from '@nestjs/common'
 import { NestFactory } from '@nestjs/core'
-import { Logger } from 'nestjs-pino'
 import { AppModule } from './app.module'
 import { GlobalExceptionFilter } from './shared/filters/global-exception.filter'
 import { GlobalInterceptor } from './shared/interceptors/global.interceptor'
@@ -20,7 +19,8 @@ async function bootstrap() {
       // transform: true
     })
   )
-  app.useLogger(app.get(Logger))
+  // TODO: build custom logger implement nest.js and pino
+  // app.useLogger(app.get(Logger))
   app.useGlobalInterceptors(new GlobalInterceptor())
   app.useGlobalFilters(new GlobalExceptionFilter())
   app.setGlobalPrefix('api')

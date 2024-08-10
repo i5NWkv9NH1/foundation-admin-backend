@@ -28,8 +28,8 @@ export class Menu extends BaseEntity {
   @Column()
   icon: string
   @Column({ nullable: true, type: 'text' })
-  path?: string
-  @Column({ nullable: true, name: 'parent_id' })
+  path: string
+  @Column({ nullable: true, name: 'parentId' })
   parentId: string | null
   @Column({ nullable: true })
   component: string | null
@@ -48,8 +48,8 @@ export class Menu extends BaseEntity {
   })
   sort: number
 
-  @ManyToOne(() => Menu, (menu) => menu.children, { nullable: true })
-  @JoinColumn({ name: 'parent_id' })
+  @ManyToOne(() => Menu, (menu) => menu.children)
+  @JoinColumn({ name: 'parentId' })
   parent: Menu
 
   @OneToMany(() => Menu, (menu) => menu.parent)

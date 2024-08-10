@@ -54,13 +54,13 @@ export class Organization extends BaseEntity {
   icon: string
 
   @Column({ nullable: true, type: 'text' })
-  path?: string
+  path: string
 
-  @Column({ nullable: true, default: null, name: 'parent_id' })
-  parentId?: string
+  @Column({ nullable: true, default: null, name: 'parentId' })
+  parentId: string | null
 
   @ManyToOne(() => Organization, (organization) => organization.children)
-  @JoinColumn({ name: 'parent_id' })
+  @JoinColumn({ name: 'parentId' })
   parent: Organization
 
   @OneToMany(() => Organization, (organization) => organization.parent)

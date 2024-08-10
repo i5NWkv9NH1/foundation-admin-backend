@@ -35,13 +35,14 @@ export class OrganizationService extends BaseService<Organization> {
     return qb
       .leftJoinAndSelect('organization.parent', 'parent')
       .leftJoinAndSelect('organization.children', 'children')
-      .leftJoinAndSelect('organization.accounts', 'accounts')
+      .leftJoinAndSelect('organization.accounts', 'account')
   }
 
+  // ? overwrite query builder
   async findOne(id: string): Promise<Organization> {
     return await this.organizationRepository.findOne({
       where: { id },
-      relations: ['accounts']
+      relations: ['accounts', 'parent', 'children']
     })
   }
 

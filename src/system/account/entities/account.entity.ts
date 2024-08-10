@@ -51,15 +51,15 @@ export class Account extends BaseEntity {
   @Column({ nullable: true, unique: true })
   email?: string
 
-  @ManyToMany(() => Role, (role) => role)
-  @JoinTable({
-    name: 'sys_account_role',
-    joinColumn: { name: 'accountId' },
-    inverseJoinColumn: { name: 'roleId' }
-  })
+  @ManyToMany(() => Role, (role) => role.accounts)
+  // @JoinTable({
+  //   name: 'sys_account_role',
+  //   joinColumn: { name: 'accountId' },
+  //   inverseJoinColumn: { name: 'roleId' }
+  // })
   roles: Role[]
 
-  @ManyToMany(() => Organization, (organization) => organization)
+  @ManyToMany(() => Organization, (organization) => organization.accounts)
   @JoinTable({
     name: 'sys_account_organization', // 中间表名称
     joinColumn: { name: 'accountId' }, // 当前实体的连接字段

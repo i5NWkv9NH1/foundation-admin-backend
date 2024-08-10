@@ -14,7 +14,7 @@ export class Action extends BaseEntity {
   @Column()
   icon: string
 
-  @Column('uuid', { name: 'menu_id' })
+  @Column('uuid', { name: 'menuId' })
   menuId: string
 
   @ManyToOne(() => Menu, (_) => _.actions, { onDelete: 'CASCADE' })

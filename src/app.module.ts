@@ -4,7 +4,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config'
 import { ElasticsearchModule } from '@nestjs/elasticsearch'
 import { ThrottlerModule } from '@nestjs/throttler'
 import { TypeOrmModule } from '@nestjs/typeorm'
-import { LoggerModule } from 'nestjs-pino'
 import { ElasticsearchConfigService } from './elasticsearch-config.service' // 下面会创建
 import { BusinessModule } from './modules/business.module'
 import { RedisConfigService } from './redis-config.service'
@@ -14,7 +13,8 @@ import { SystemModule } from './system/system.module'
 import { TypeOrmConfigService } from './typeorm-config.service' // 下面会创建
 @Module({
   imports: [
-    LoggerModule.forRoot(),
+    // TODO: build custom logger implement nest.js and pino
+    // LoggerModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true // 使配置模块全局可用
     }),
