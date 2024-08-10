@@ -9,7 +9,8 @@ export enum AccountRelations {
 }
 export enum Gender {
   MALE = 'MALE',
-  FEMALE = 'FEMALE'
+  FEMALE = 'FEMALE',
+  PRIVATE = 'PRIVATE'
 }
 export enum StatusEnum {
   DISABLE = 'DISABLE',
@@ -36,7 +37,7 @@ export class Account extends BaseEntity {
     nullable: false,
     default: StatusEnum.ENABLE
   })
-  state: StatusEnum
+  status: StatusEnum
 
   @Column({ nullable: true })
   phone?: string

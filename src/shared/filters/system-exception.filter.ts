@@ -39,7 +39,6 @@ export class SystemExceptionFilter implements ExceptionFilter {
    * @param {ArgumentsHost} host - The context in which the exception was thrown.
    */
   catch(exception: HttpException | QueryFailedError, host: ArgumentsHost) {
-    console.log(exception.name)
     if (exception instanceof QueryFailedError) {
       // Handle TypeORM exceptions
       const ctx = host.switchToHttp()

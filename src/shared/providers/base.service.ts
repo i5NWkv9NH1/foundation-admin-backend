@@ -1,5 +1,11 @@
 import { Logger } from '@nestjs/common'
-import { DeepPartial, Repository, SelectQueryBuilder } from 'typeorm'
+import { Account } from 'src/system/account/entities/account.entity'
+import {
+  DeepPartial,
+  FindOptionsWhere,
+  Repository,
+  SelectQueryBuilder
+} from 'typeorm'
 import { BaseEntity } from '../entities/base.entity'
 
 export abstract class BaseService<T extends BaseEntity> {
@@ -44,14 +50,14 @@ export abstract class BaseService<T extends BaseEntity> {
   }
 
   async findOne(id: string): Promise<T> {
-    // return await this.repository.findOne({
-    //   where: {
-    //     id
-    //   } as FindOptionsWhere<T>
-    // })
-    const qb = this.createQueryBuilder()
-    this.applyCustomizations(qb)
-    return qb.getOne()
+    return await this.repository.findOne({
+      where: {
+        id
+      } as FindOptionsWhere<T>
+    })
+    // const qb = this.createQueryBuilder()
+    // this.applyCustomizations(qb)
+    // return qb.getOne()
   }
 
   async create(entity: T): Promise<T> {
@@ -59,14 +65,34 @@ export abstract class BaseService<T extends BaseEntity> {
     return await this.repository.save(item)
   }
 
-  async update(id: string, entity: DeepPartial<T>) {
-    const item = await this.repository.preload({
-      id,
-      ...entity
-    })
-    if (!item) return
-    Object.assign(item, entity)
-    return await this.repository.save(entity)
+  async update(
+    id: string,
+    updateData: DeepPartial<Account>
+  ): Promise<T | null> {
+    try {
+      // Fetch the existing entity
+      const item = await this.repository.findOne({
+        where: { id } as FindOptionsWhere<T>
+      })
+
+      if (!item) {
+        console.warn(`Entity with ID ${id} not found`)
+        return null
+      }
+
+      // Apply the updates to the fetched entity
+      for (const [key, value] of Object.entries(updateData)) {
+        ;(item as any)[key] = value // Explicitly set each field
+      }
+
+      // Save the updated entity
+      const result = await this.repository.save(item)
+
+      return result
+    } catch (error) {
+      console.error('Error saving entity:', error)
+      throw error
+    }
   }
 
   async delete(id: string): Promise<void> {

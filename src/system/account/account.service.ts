@@ -32,8 +32,8 @@ export class AccountService extends BaseService<Account> {
         //
         .leftJoinAndSelect('account.organizations', 'organization')
         .leftJoinAndSelect('account.roles', 'role')
-      // .orderBy('account.createdAt', 'DESC')
     )
+    // .orderBy('account.createdAt', 'DESC')
   }
 
   // 自定义过滤逻辑
@@ -45,27 +45,25 @@ export class AccountService extends BaseService<Account> {
       const value = filters[key]
       if (value) {
         if (key === 'organizationId') {
-          // qb.innerJoin(
-          //   'account.organizations',
-          //   'organization',
-          //   'organization.id = :organizationId',
-          //   { organizationId: value }
-          // )
+          // 确保在 `JOIN` 语句中加入组织表，并在 `WHERE` 条件中过滤
           qb
-            //
-            .leftJoin('account.organizations', 'organization')
-            .where('organization.id = :id', {
-              id: value
+            // .leftJoin('account.organizations', 'organization')
+            .andWhere('organization.id = :organizationId', {
+              organizationId: value
             })
-        }
-        if (key === 'startDate' || key === 'endDate') {
+        } else if (key === 'startDate' || key === 'endDate') {
           if (key === 'startDate') {
             qb.andWhere('account.createdAt >= :startDate', { startDate: value })
-          }
-          if (key === 'endDate') {
+          } else if (key === 'endDate') {
             qb.andWhere('account.createdAt <= :endDate', { endDate: value })
           }
+        } else if (key === 'status') {
+          // -1 all
+          if (value !== 'ALL') {
+            qb.where('account.status = :status', { status: value })
+          }
         } else {
+          // TODO: update text search LIKE in varchar columns
           qb.andWhere(`account.${key} LIKE :${key}`, { [key]: `%${value}%` })
         }
       }

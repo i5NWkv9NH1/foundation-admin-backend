@@ -30,12 +30,19 @@ export class RoleService extends BaseService<Role> {
   protected applyCustomizations(
     qb: SelectQueryBuilder<Role>
   ): SelectQueryBuilder<Role> {
-    return (
-      qb
-        //
-        .leftJoinAndSelect('role.accounts', 'account')
-        .leftJoinAndSelect('role.actions', 'action')
-    )
+    return qb
+    //
+    // .leftJoinAndSelect('role.accounts', 'account')
+    // .leftJoinAndSelect('role.actions', 'action')
+  }
+
+  async findOne(id: string): Promise<Role> {
+    const qb = this.roleRepo.createQueryBuilder('role')
+    return qb
+      .leftJoinAndSelect('role.accounts', 'account')
+      .leftJoinAndSelect('role.actions', 'action')
+      .where('role.id =:id', { id })
+      .getOne()
   }
 
   async findRoles(): Promise<Role[]> {

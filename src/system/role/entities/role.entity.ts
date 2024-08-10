@@ -6,6 +6,10 @@ import { Column, Entity, Index, JoinTable, ManyToMany } from 'typeorm'
 export enum RoleRelations {
   Actions = 'actions'
 }
+export enum StatusEnum {
+  DISABLE = 'DISABLE',
+  ENABLE = 'ENABLE'
+}
 
 @Entity('sys_role')
 export class Role extends BaseEntity {
@@ -15,6 +19,20 @@ export class Role extends BaseEntity {
   @Index()
   @Column({ unique: true })
   code: string
+
+  @Column({
+    type: 'enum',
+    enum: StatusEnum,
+    nullable: false,
+    default: StatusEnum.ENABLE
+  })
+  status: StatusEnum
+
+  @Column({
+    type: 'int',
+    default: 0
+  })
+  sort: number
 
   @ManyToMany(() => Account, (_) => _.roles)
   @JoinTable({

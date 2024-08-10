@@ -39,7 +39,7 @@ export abstract class BaseController<T extends BaseEntity> {
   }
 
   @Put(':id')
-  async update(@Param('id') id: string, entity: DeepPartial<T>) {
+  async update(@Param('id') id: string, @Body() entity: DeepPartial<T>) {
     return await this.service.update(id, entity)
   }
 
