@@ -28,7 +28,7 @@ export class Account extends BaseEntity {
   @Column({ nullable: true, name: 'avatarUrl' })
   avatarUrl: string
 
-  @Column({ type: 'enum', enum: Gender, nullable: false })
+  @Column({ type: 'enum', enum: Gender, default: Gender.PRIVATE })
   gender: Gender
 
   @Column({
@@ -51,6 +51,9 @@ export class Account extends BaseEntity {
   @Index()
   @Column({ nullable: true, unique: true })
   email?: string
+
+  @Column({ select: false, nullable: true })
+  originPassword: string | null
 
   @ManyToMany(() => Role, (role) => role.accounts)
   // @JoinTable({

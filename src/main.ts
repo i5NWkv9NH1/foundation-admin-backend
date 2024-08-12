@@ -14,11 +14,7 @@ async function bootstrap() {
   })
   // 需要依赖注入
   // app.useGlobalFilters(new SystemExceptionFilter())
-  app.useGlobalPipes(
-    new ValidationPipe({
-      // transform: true
-    })
-  )
+  app.useGlobalPipes(new ValidationPipe())
   // TODO: build custom logger implement nest.js and pino
   // app.useLogger(app.get(Logger))
   app.useGlobalInterceptors(new GlobalInterceptor())

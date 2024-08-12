@@ -14,11 +14,11 @@ export enum StatusEnum {
 @Entity('sys_role')
 export class Role extends BaseEntity {
   @Column()
-  name: string
+  label: string
 
   @Index()
   @Column({ unique: true })
-  code: string
+  name: string
 
   @Column({
     type: 'enum',

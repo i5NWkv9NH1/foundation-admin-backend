@@ -24,11 +24,11 @@ export enum TypeEnum {
 @Entity('sys_organization')
 export class Organization extends BaseEntity {
   @Column()
-  name: string
+  label: string
 
   @Index()
   @Column({ unique: true })
-  code: string
+  name: string
 
   @Column({
     type: 'enum',

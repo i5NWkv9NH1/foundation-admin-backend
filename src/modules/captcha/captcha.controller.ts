@@ -2,10 +2,8 @@ import {
   BadRequestException,
   Body,
   Controller,
-  Get,
   HttpStatus,
   Post,
-  Query,
   Res,
   UseGuards
 } from '@nestjs/common'
@@ -13,24 +11,28 @@ import { Throttle, ThrottlerGuard } from '@nestjs/throttler'
 import { Response } from 'express'
 import { CaptchaService } from './captcha.service'
 
+interface GenerateCaptchaPayload {
+  uniqueId: string
+}
+
 @Controller('captcha')
 export class CaptchaController {
   constructor(private readonly captchaService: CaptchaService) {}
 
-  @Get('generate')
+  @Post('generate')
   @UseGuards(ThrottlerGuard)
   @Throttle({
     default: { limit: 5, ttl: 60 }
   }) // 每60秒最多请求5次
   async generateCaptcha(
-    @Query('uniqueId') uniqueId: string,
+    @Body() data: GenerateCaptchaPayload,
     @Res() res: Response
   ) {
-    if (!uniqueId) {
+    if (!data.uniqueId) {
       throw new BadRequestException('uniqueId is required')
     }
 
-    const captchaSvg = await this.captchaService.generateCaptcha(uniqueId)
+    const captchaSvg = await this.captchaService.generateCaptcha(data.uniqueId)
     res.set('Content-Type', 'image/svg+xml')
     res.send(captchaSvg)
   }

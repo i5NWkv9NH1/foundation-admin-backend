@@ -3,11 +3,13 @@ import { ConfigModule, ConfigService } from '@nestjs/config'
 import { JwtModule } from '@nestjs/jwt'
 import { PassportModule } from '@nestjs/passport'
 import { TypeOrmModule } from '@nestjs/typeorm'
+import { CaptchaModule } from 'src/modules/captcha/captcha.module'
 import { AccountService } from '../account/account.service'
 import { Account } from '../account/entities/account.entity'
 import { Action } from '../action/entities/action.entity'
 import { AuthController } from './auth.controller'
 import { AuthService } from './auth.service'
+import { BlacklistedTokensService } from './blacklisted-token.service'
 import { JwtAuthGuard } from './jwt-auth.guard'
 import { JwtStrategy } from './jwt.strategy'
 import { RolesGuard } from './roles.guard'
@@ -24,7 +26,8 @@ import { RolesGuard } from './roles.guard'
       }),
       inject: [ConfigService]
     }),
-    TypeOrmModule.forFeature([Account, Action])
+    TypeOrmModule.forFeature([Account, Action]),
+    CaptchaModule
   ],
   controllers: [AuthController],
   providers: [
@@ -32,7 +35,8 @@ import { RolesGuard } from './roles.guard'
     JwtAuthGuard,
     RolesGuard,
     AuthService,
-    AccountService
+    AccountService,
+    BlacklistedTokensService
   ],
   exports: [
     JwtStrategy,

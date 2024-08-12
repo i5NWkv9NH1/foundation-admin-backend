@@ -22,6 +22,6 @@ export class Action extends BaseEntity {
   @JoinColumn({ name: 'menuId' })
   menu: Menu
 
-  @ManyToMany(() => Role, (_) => _.actions)
+  @ManyToMany(() => Role, (_) => _.actions, { onDelete: 'CASCADE' })
   roles: Role[]
 }
