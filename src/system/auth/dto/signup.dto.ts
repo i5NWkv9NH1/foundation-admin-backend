@@ -1,7 +1,7 @@
 import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator'
 import { Gender, StatusEnum } from 'src/system/account/entities/account.entity'
 
-export class RegisterDto {
+export class SignupDto {
   @IsString()
   @IsNotEmpty()
   username: string

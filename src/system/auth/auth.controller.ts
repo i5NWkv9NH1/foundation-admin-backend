@@ -1,12 +1,14 @@
-import { Body, Get, Post } from '@nestjs/common'
+import { Body, Get, Logger, Post } from '@nestjs/common'
 import { Public, SystemController } from 'src/shared/decorators'
 import { AuthService } from './auth.service'
-import { LoginDto } from './dto/login.dto'
-import { RegisterDto } from './dto/register.dto'
+import { LogoutDto } from './dto/logout.dto'
 import { RefreshTokenDto } from './dto/refresh-token.dto'
+import { SigninDto } from './dto/signin.dto'
+import { SignupDto } from './dto/signup.dto'
 
 @SystemController('auth')
 export class AuthController {
+  private logger = new Logger(AuthController.name)
   constructor(private readonly authService: AuthService) {}
 
   @Get('test')
@@ -16,17 +18,23 @@ export class AuthController {
   }
 
   @Post('signup')
-  async register(@Body() registerDto: RegisterDto) {
-    return this.authService.register(registerDto)
+  async signup(@Body() signupDto: SignupDto) {
+    return this.authService.signup(signupDto)
   }
 
   @Post('signin')
-  async login(@Body() loginDto: LoginDto) {
-    return this.authService.login(loginDto)
+  async signin(@Body() signinDto: SigninDto) {
+    this.logger.debug(signinDto)
+    return this.authService.signin(signinDto)
   }
 
   @Post('refresh')
   async refresh(@Body() refreshTokenDto: RefreshTokenDto) {
     return this.authService.refreshToken(refreshTokenDto)
+  }
+
+  @Post('logout')
+  async logout(@Body() { accessToken, refreshToken }: LogoutDto) {
+    return this.authService.logout({ accessToken, refreshToken })
   }
 }

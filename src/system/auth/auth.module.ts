@@ -7,6 +7,7 @@ import { CaptchaModule } from 'src/modules/captcha/captcha.module'
 import { AccountService } from '../account/account.service'
 import { Account } from '../account/entities/account.entity'
 import { Action } from '../action/entities/action.entity'
+import { Menu } from '../menu/entities/menu.entity'
 import { AuthController } from './auth.controller'
 import { AuthService } from './auth.service'
 import { BlacklistedTokensService } from './blacklisted-token.service'
@@ -26,7 +27,7 @@ import { RolesGuard } from './roles.guard'
       }),
       inject: [ConfigService]
     }),
-    TypeOrmModule.forFeature([Account, Action]),
+    TypeOrmModule.forFeature([Account, Action, Menu]),
     CaptchaModule
   ],
   controllers: [AuthController],

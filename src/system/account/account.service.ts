@@ -111,6 +111,9 @@ export class AccountService extends BaseService<Account> {
   }
 
   async findByUsername(username: string) {
-    return await this.accountRepository.findOne({ where: { username } })
+    return await this.accountRepository.findOne({
+      where: { username },
+      relations: ['roles', 'organizations']
+    })
   }
 }
