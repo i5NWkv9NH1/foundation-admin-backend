@@ -1,0 +1,3 @@
+INSERT INTO "sys_role" ("id", "name", "createdAt", "updatedAt", "code") VALUES ('96ade398-4804-4981-a31f-2e3521b7dc2c', 'Admin', '2024-08-07 15:44:33.294756', '2024-08-07 15:44:33.294756', 'admin');
+INSERT INTO "sys_role" ("id", "name", "createdAt", "updatedAt", "code") VALUES ('e86b4632-9679-4f42-9fd5-9516fb53b749', 'Operation', '2024-08-07 15:44:33.294756', '2024-08-07 15:44:33.294756', 'operation');
+INSERT INTO "sys_role" ("id", "name", "createdAt", "updatedAt", "code") VALUES ('f1f9a9ae-bb68-43e9-8558-4b8b1ec188bf', 'Developer', '2024-08-07 15:44:33.294756', '2024-08-07 15:44:33.294756', 'developer');
