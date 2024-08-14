@@ -19,6 +19,7 @@ import { QueryFailedError } from 'typeorm'
 import { SystemHttpExceptionFilter } from './system-http-exception.filter'
 
 @Injectable()
+// @Catch(HttpException, QueryFailedError)
 @Catch(HttpException, QueryFailedError)
 export class SystemExceptionFilter implements ExceptionFilter {
   /**

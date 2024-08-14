@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm'
 import { BaseService } from 'src/shared/providers/base.service'
 import { DataSource, Like, Repository, SelectQueryBuilder } from 'typeorm'
@@ -7,6 +7,8 @@ import { Menu, MenuRelations } from './entities/menu.entity'
 
 @Injectable()
 export class MenuService extends BaseService<Menu> {
+  protected readonly logger = new Logger(MenuService.name)
+
   constructor(
     @InjectRepository(Menu)
     private readonly menuRepo: Repository<Menu>,
@@ -51,14 +53,11 @@ export class MenuService extends BaseService<Menu> {
   }
 
   async create(entity: Menu): Promise<Menu> {
-    console.debug('entity', entity)
     // 查找父级菜单
     //! 如果没有的话，那么作为一级菜单
     const parent = entity.parentId
       ? await this.menuRepo.findOne({ where: { id: entity.parentId } })
       : null
-
-    console.debug('parent', parent)
 
     return await this.dataSource.transaction(
       async (transactionalEntityManager) => {
@@ -93,7 +92,6 @@ export class MenuService extends BaseService<Menu> {
   }
 
   async update(id: string, entity: Menu): Promise<Menu> {
-    // 查找现有菜单及其动作
     const existingMenu = await this.menuRepo.findOne({
       where: { id },
       relations: [MenuRelations.Actions]
@@ -102,7 +100,6 @@ export class MenuService extends BaseService<Menu> {
     if (existingMenu) {
       return await this.dataSource.transaction(
         async (transactionalEntityManager) => {
-          // 找到需要删除、添加和更新的动作
           const removeActions = existingMenu.actions.filter(
             (action) =>
               !entity.actions.some((eAction) => eAction.id === action.id)
@@ -150,7 +147,7 @@ export class MenuService extends BaseService<Menu> {
         }
       )
     }
-    return null // 如果没有找到菜单，返回 null
+    throw new BadRequestException('Menu not found')
   }
 
   async remove(id: string): Promise<void> {

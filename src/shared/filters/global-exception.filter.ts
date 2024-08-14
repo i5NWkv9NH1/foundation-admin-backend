@@ -12,7 +12,8 @@ import { QueryFailedError } from 'typeorm'
  * * @description GlobalExceptionFilter handles exceptions for the entire application.
  * * It manages both TypeORM exceptions and general HTTP exceptions.
  */
-@Catch(HttpException, QueryFailedError)
+// @Catch(HttpException, QueryFailedError)
+@Catch(HttpException)
 export class GlobalExceptionFilter implements ExceptionFilter {
   /**
    * **catch** method handles exceptions and formats the response based on the exception type.

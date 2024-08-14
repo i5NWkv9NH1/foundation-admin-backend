@@ -78,6 +78,8 @@ export class AccountService extends BaseService<Account> {
           qb.andWhere('role.id = :roleId', {
             roleId: value
           })
+        } else if (key === 'gender') {
+          qb.andWhere('account.gender =:gender', { gender: value })
         } else if (key === 'text') {
           qb.andWhere(
             new Brackets((qb) => {
