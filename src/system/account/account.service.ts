@@ -89,13 +89,15 @@ export class AccountService extends BaseService<Account> {
   async findOne(id: string): Promise<Account> {
     try {
       const qb = this.createQueryBuilder()
-      return qb
-        .where('account.createdAt IS NOT NULL')
-        .andWhere('account.id = :id', { id })
-        .leftJoinAndSelect('account.organizations', 'organization')
-        .leftJoinAndSelect('account.roles', 'role')
-        .orderBy('account.createdAt', 'DESC')
-        .getOne()
+      return (
+        qb
+          .where('account.createdAt IS NOT NULL')
+          .andWhere('account.id = :id', { id })
+          .leftJoinAndSelect('account.organizations', 'organization')
+          .leftJoinAndSelect('account.roles', 'role')
+          // .orderBy('account.createdAt', 'DESC')
+          .getOne()
+      )
     } catch (error) {
       throw new BadRequestException('Account not found')
     }
@@ -142,13 +144,29 @@ export class AccountService extends BaseService<Account> {
 
   async updateAccount(id: string, entity: UpdateAccountDto) {
     const account = await this.findOne(id)
-    const organizations = await this.organizationRepo.findBy({
-      id: In(entity.organizationIds)
+
+    const { organizationIds, ...updateFields } = entity
+
+    // ? 移除未勾选的组织
+    // ? 保存好其他字段
+    updateFields.organizations = []
+    const newAccount = await this.accountRepository.save({
+      ...account,
+      ...updateFields
     })
-    if (organizations.length !== entity.organizationIds.length) {
-      throw new BadRequestException('Some organizations not found')
+
+    if (organizationIds) {
+      const organizations = await this.organizationRepo.findBy({
+        id: In(organizationIds)
+      })
+
+      if (organizations.length !== organizationIds.length) {
+        throw new BadRequestException('Some organizations not found')
+      }
+
+      newAccount.organizations = organizations
     }
-    account.organizations = organizations
-    return await this.accountRepository.save(account)
+    // 保存插入组织的实体
+    return await this.accountRepository.save({ ...newAccount })
   }
 }
