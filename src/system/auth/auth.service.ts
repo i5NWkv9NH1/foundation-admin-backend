@@ -8,6 +8,7 @@ import { JwtService } from '@nestjs/jwt'
 import { InjectRepository } from '@nestjs/typeorm'
 import { compare, hash } from 'bcrypt'
 import { chain, uniq } from 'lodash'
+import { DEFAULT_ROLE_NAME } from 'src/constants'
 import { CaptchaService } from 'src/modules/captcha/captcha.service'
 import { AccountService } from 'src/system/account/account.service'
 import { Account } from 'src/system/account/entities/account.entity'
@@ -18,7 +19,7 @@ import {
   Organization,
   TypeEnum
 } from '../organization/entities/organization.entity'
-import { Role, RoleName } from '../role/entities/role.entity'
+import { Role } from '../role/entities/role.entity'
 import { BlacklistedTokensService } from './blacklisted-token.service'
 import { LogoutDto } from './dto/logout.dto'
 import { RefreshTokenDto } from './dto/refresh-token.dto'
@@ -61,7 +62,7 @@ export class AuthService {
 
     if (roles.length === 0) {
       const userRole = await this.roleRepo.findOne({
-        where: { name: RoleName.User }
+        where: { name: DEFAULT_ROLE_NAME }
       })
       if (userRole) {
         roles = [userRole]

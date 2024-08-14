@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { BaseService } from 'src/shared/providers/base.service'
-import { Brackets, In, Repository, SelectQueryBuilder } from 'typeorm'
+import { In, Repository, SelectQueryBuilder } from 'typeorm'
 import { ActionService } from '../action/action.service'
 import { Action } from '../action/entities/action.entity'
 import { Menu } from '../menu/entities/menu.entity'
@@ -21,37 +21,79 @@ export class RoleService extends BaseService<Role> {
     super(roleRepo)
   }
   protected createQueryBuilder(): SelectQueryBuilder<Role> {
-    return this.roleRepo.createQueryBuilder('role')
+    const qb = this.roleRepo.createQueryBuilder('role')
+    this.logger.debug(this.createQueryBuilder.name)
+    return qb
+    //! filter ROOT role
+    // .andWhere('role.name != :name', { name: 'ROOT' })
+    // .orderBy('role.sort', 'ASC')
   }
+  // protected applyFilters(
+  //   qb: SelectQueryBuilder<Role>,
+  //   filters: Record<string, any>
+  // ): void {
+  //   Object.keys(filters).forEach((key) => {
+  //     const value = filters[key]
+  //     if (value) {
+  //       if (key === 'text') {
+  //         qb.andWhere('role.label LIKE :search', {
+  //           search: `%${value}%`
+  //         })
+  //       } else if (key === 'name') {
+  //         // qb.andWhere('CAST(role.name AS TEXT)  LIKE :search', {
+  //         //   search: `%${value}%`
+  //         // })
+  //         qb.andWhere('role.name = :name', { name: value })
+  //       } else if (key === 'status') {
+  //         if (value !== 'ALL') {
+  //           qb.andWhere('role.status = :status', { status: value })
+  //         }
+  //       } else {
+  //       }
+  //     }
+  //   })
+  // }
   protected applyFilters(
     qb: SelectQueryBuilder<Role>,
     filters: Record<string, any>
   ): void {
+    this.logger.debug(this.applyFilters.name, filters)
     Object.keys(filters).forEach((key) => {
       const value = filters[key]
-      if (value) {
-        if (key === 'text') {
-          qb.where(
-            new Brackets((qb) => {
-              qb.orWhere('account.username LIKE :search', {
-                search: `%${value}%`
-              })
-                .orWhere('account.address LIKE :search', {
-                  search: `%${value}%`
-                })
-                .orWhere('account.name LIKE :search', { search: `%${value}%` })
-            })
-          )
+      // 仅当 value 不为空或未定义时才进行过滤
+      if (value !== undefined && value !== null) {
+        switch (key) {
+          case 'text':
+            qb.andWhere('role.label LIKE :search', { search: `%${value}%` })
+            break
+          case 'name':
+            if (value !== 'ROOT') {
+              // 仅当 `name` 不为 `ROOT` 时才应用过滤条件
+              qb.andWhere('role.name = :name', { name: value })
+            }
+            break
+          case 'status':
+            if (value !== 'ALL') {
+              qb.andWhere('role.status = :status', { status: value })
+            }
+            break
+          default:
+            break
         }
       }
     })
   }
 
-  protected applyCustomizations(
-    qb: SelectQueryBuilder<Role>
-  ): SelectQueryBuilder<Role> {
-    return qb
-    //
+  protected applyCustomizations(qb: SelectQueryBuilder<Role>): void {
+    this.logger.debug(this.applyCustomizations.name)
+    /**
+     * ! WHERE 子句的逻辑是累加的，
+     */
+    qb
+      // .andWhere('role.name != :name', { name: 'ROOT' })
+      //
+      .andWhere(`role.name != :excludedName`, { excludedName: 'ROOT' })
+      .orderBy('role.sort', 'ASC')
     // .leftJoinAndSelect('role.accounts', 'account')
     // .leftJoinAndSelect('role.actions', 'action')
   }

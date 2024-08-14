@@ -10,20 +10,22 @@ export enum StatusEnum {
   DISABLE = 'DISABLE',
   ENABLE = 'ENABLE'
 }
-export enum RoleName {
-  Root = 'ROOT',
-  Admin = 'ADMIN',
-  User = 'USER',
-  GUEST = 'GUEST'
-}
+// export enum RoleName {
+//   Root = 'ROOT',
+//   Admin = 'ADMIN',
+//   User = 'USER',
+//   GUEST = 'GUEST'
+// }
 
 @Entity('sys_role')
 export class Role extends BaseEntity {
   @Column()
   label: string
 
-  @Column({ type: 'enum', enum: RoleName, default: RoleName.User })
-  name: RoleName
+  // @Column({ type: 'enum', enum: RoleName, default: RoleName.User })
+  // name: RoleName
+  @Column({ nullable: false, type: 'varchar', length: 255 })
+  name: string
 
   @Column({
     type: 'enum',

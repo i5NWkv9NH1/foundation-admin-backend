@@ -5,6 +5,7 @@ import {
   NotFoundException
 } from '@nestjs/common'
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm'
+import { DEFAULT_ROLE_NAME } from 'src/constants'
 import { BaseService } from 'src/shared/providers/base.service'
 import {
   Brackets,
@@ -18,7 +19,7 @@ import {
   Organization,
   TypeEnum
 } from '../organization/entities/organization.entity'
-import { Role, RoleName } from '../role/entities/role.entity'
+import { Role } from '../role/entities/role.entity'
 import { CreateAccountDto } from './dto/create-account.dto'
 import { UpdateAccountDto } from './dto/update-account.dto'
 import { Account } from './entities/account.entity'
@@ -42,13 +43,8 @@ export class AccountService extends BaseService<Account> {
   }
 
   protected createQueryBuilder(): SelectQueryBuilder<Account> {
-    return this.accountRepository.createQueryBuilder('account')
-  }
-
-  protected applyCustomizations(
-    qb: SelectQueryBuilder<Account>
-  ): SelectQueryBuilder<Account> {
-    return qb
+    return this.accountRepository
+      .createQueryBuilder('account')
       .leftJoinAndSelect('account.organizations', 'organization')
       .leftJoinAndSelect('account.roles', 'role')
   }
@@ -99,6 +95,14 @@ export class AccountService extends BaseService<Account> {
     })
   }
 
+  protected applyCustomizations(qb: SelectQueryBuilder<Account>): void {
+    qb
+      //
+      .andWhere(`role.name != :name`, { name: 'ROOT' })
+      //
+      .orderBy('account.createdAt', 'ASC')
+  }
+
   async findOne(id: string): Promise<Account> {
     try {
       const qb = this.createQueryBuilder()
@@ -106,9 +110,10 @@ export class AccountService extends BaseService<Account> {
         qb
           .where('account.createdAt IS NOT NULL')
           .andWhere('account.id = :id', { id })
-          .leftJoinAndSelect('account.organizations', 'organization')
-          .leftJoinAndSelect('account.roles', 'role')
-          // .orderBy('account.createdAt', 'DESC')
+          // ? already join in first hooks
+          // .leftJoinAndSelect('account.organizations', 'organization')
+          // .leftJoinAndSelect('account.roles', 'role')
+          .orderBy('account.createdAt', 'DESC')
           .getOne()
       )
     } catch (error) {
@@ -169,7 +174,7 @@ export class AccountService extends BaseService<Account> {
             where: { type: TypeEnum.COMPANY }
           }),
           transactionalEntityManager.findOne(Role, {
-            where: { name: RoleName.User }
+            where: { name: DEFAULT_ROLE_NAME }
           })
         ])
 
