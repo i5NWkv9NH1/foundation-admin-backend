@@ -251,10 +251,10 @@
 
 Adding a Role-Menu Table provides finer control over which menu items are accessible to which roles, making permission management more flexible. However, this also introduces complexities in management and potential data redundancy. Balancing these factors based on specific business needs and system scale is essential for effective implementation.
 
-## Guard
+## Guards
 
 ```ts
-// JwtAuthGuard
+// JwtStrategy
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     protected configService: ConfigService,
@@ -282,13 +282,45 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 ```
 
 ```ts
+// JwtAuthGuard
+export class JwtAuthGuard implements CanActivate {
+  private logger = new Logger(JwtAuthGuard.name)
+  constructor(
+    private readonly jwtService: JwtService,
+    private reflector: Reflector
+  ) {}
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const isPublic = this.reflector.get<boolean>(
+      'isPublic',
+      context.getHandler()
+    )
+    if (isPublic) {
+      return true
+    }
+    const request: Request = context.switchToHttp().getRequest()
+    const authHeader = request.headers.authorization
+    if (!authHeader) {
+      throw new UnauthorizedException('No token provided')
+    }
+    try {
+      const token = authHeader.split(' ')[1]
+      const payload = await this.jwtService.verifyAsync(token)
+      request.account = payload.account
+      return true
+    } catch (error) {
+      throw new UnauthorizedException('Invalid or expired token')
+    }
+  }
+}
+```
+
+```ts
 // RoleGuard
 export class RolesGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
     private accountService: AccountService
   ) {}
-
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const isPublic = this.reflector.get<boolean>(
       'isPublic',
@@ -325,7 +357,7 @@ export class RolesGuard implements CanActivate {
 
 ```ts
 // actions
-export type ActionCode = 'VIEW' | 'CREATE' | 'UPDATE' | 'DELETE'
+export type ActionCode = 'VIEW' | 'CREATE' | 'UPDATE' | 'DELETE' | [add your actions here and database]
 export const Actions = (...actions: ActionCode[]) =>
   SetMetadata('actions', actions)
 ```
@@ -338,6 +370,9 @@ export const Public = () => SetMetadata(PUBLIC_KEY, true)
 
 ```ts
 // example
+// Work only if the `role` has `UPDATE` `action` for menu'/'
+@UseGuards(JwtAuthGuard, RoleGuard)
+@Controller('/')
 class Controller {
   @Put(':id')
   @Actions('UPDATE')
