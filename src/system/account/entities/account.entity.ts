@@ -18,7 +18,7 @@ export enum StatusEnum {
 }
 @Entity('sys_account')
 export class Account extends BaseEntity {
-  @Column()
+  @Column({ nullable: true })
   name: string
 
   @Index()

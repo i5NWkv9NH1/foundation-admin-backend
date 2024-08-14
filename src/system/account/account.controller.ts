@@ -1,18 +1,24 @@
-import { Get, Param } from '@nestjs/common'
-import { SystemController } from 'src/shared/decorators'
+import { Body, Logger, Param, Put } from '@nestjs/common'
+import { Actions, SystemController } from 'src/shared/decorators'
 import { BaseController } from 'src/shared/providers/base.controller'
 import { AccountService } from './account.service'
+import { UpdateAccountDto } from './dto/update-account.dto'
 import { Account } from './entities/account.entity'
 
 @SystemController('accounts')
-// @UseGuards(JwtAuthGuard, RolesGuard)
 export class AccountController extends BaseController<Account> {
+  protected logger = new Logger(AccountController.name)
+
   constructor(private readonly accountService: AccountService) {
     super(accountService)
   }
 
-  @Get(':id')
-  public async findOne(@Param('id') id: string): Promise<Account> {
-    return await this.service.findOne(id)
+  @Put(':id')
+  @Actions('UPDATE')
+  async updateAccount(
+    @Param('id') id: string,
+    @Body() updateAccountDto: UpdateAccountDto
+  ) {
+    return await this.accountService.updateAccount(id, updateAccountDto)
   }
 }

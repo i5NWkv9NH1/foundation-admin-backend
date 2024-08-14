@@ -61,6 +61,7 @@ export abstract class BaseService<T extends BaseEntity> {
   }
 
   async create(entity: T): Promise<T> {
+    // Create a single entity
     const item = this.repository.create(entity)
     return await this.repository.save(item)
   }

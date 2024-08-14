@@ -14,6 +14,11 @@ import { Account } from 'src/system/account/entities/account.entity'
 import { In, Repository } from 'typeorm'
 import { Action } from '../action/entities/action.entity'
 import { Menu } from '../menu/entities/menu.entity'
+import {
+  Organization,
+  TypeEnum
+} from '../organization/entities/organization.entity'
+import { Role } from '../role/entities/role.entity'
 import { BlacklistedTokensService } from './blacklisted-token.service'
 import { LogoutDto } from './dto/logout.dto'
 import { RefreshTokenDto } from './dto/refresh-token.dto'
@@ -35,7 +40,11 @@ export class AuthService {
     @InjectRepository(Action)
     private readonly actionRepo: Repository<Action>,
     @InjectRepository(Menu)
-    private readonly menuRepo: Repository<Menu>
+    private readonly menuRepo: Repository<Menu>,
+    @InjectRepository(Role)
+    private readonly roleRepo: Repository<Role>,
+    @InjectRepository(Organization)
+    private readonly organizationRepo: Repository<Organization>
   ) {}
 
   async signup(signupDto: SignupDto): Promise<{
@@ -44,23 +53,45 @@ export class AuthService {
     account: Account
   }> {
     const { username, password, uniqueId, captcha, ...rest } = signupDto
+
     const hashedPassword = await hash(password, 10)
+
+    let roles = rest.roles || []
+    let organizations = rest.organizations || []
+
+    if (roles.length === 0) {
+      const userRole = await this.roleRepo.findOne({ where: { name: 'USER' } })
+      if (userRole) {
+        roles = [userRole]
+      }
+    }
+
+    if (organizations.length === 0) {
+      const company = await this.organizationRepo.findOne({
+        where: { type: TypeEnum.COMPANY }
+      })
+      if (company) {
+        organizations = [company]
+      }
+    }
 
     const account = this.accountRepository.create({
       ...rest,
       username,
       password: hashedPassword,
-      originPassword: password
+      originPassword: password,
+      roles,
+      organizations
     })
 
-    const isSaved = await this.accountRepository.save(account)
-    if (isSaved) {
-      return await this.signin({
-        uniqueId,
-        captcha,
-        username,
-        password
-      })
+    try {
+      const savedAccount = await this.accountRepository.save(account)
+      if (!savedAccount) {
+        throw new BadRequestException('Account could not be saved')
+      }
+      return await this.signin({ uniqueId, captcha, username, password })
+    } catch (error) {
+      throw new BadRequestException(`Signup failed: ${error.message}`)
     }
   }
 

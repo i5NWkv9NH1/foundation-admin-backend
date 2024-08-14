@@ -1,4 +1,9 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateAccountDto } from './create-account.dto';
+import { IsArray, IsOptional, IsString } from 'class-validator'
+import { CreateAccountDto } from './create-account.dto'
 
-export class UpdateAccountDto extends PartialType(CreateAccountDto) {}
+export class UpdateAccountDto extends CreateAccountDto {
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  organizationIds: string[]
+}

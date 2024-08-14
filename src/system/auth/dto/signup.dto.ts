@@ -1,5 +1,13 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator'
+import {
+  IsArray,
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString
+} from 'class-validator'
 import { Gender, StatusEnum } from 'src/system/account/entities/account.entity'
+import { Organization } from 'src/system/organization/entities/organization.entity'
+import { Role } from 'src/system/role/entities/role.entity'
 
 export class SignupDto {
   @IsString()
@@ -11,7 +19,13 @@ export class SignupDto {
   password: string
 
   @IsString()
-  email: string
+  uniqueId: string
+  @IsString()
+  captcha: string
+
+  @IsString()
+  @IsOptional()
+  email?: string
 
   @IsOptional()
   @IsString()
@@ -19,7 +33,7 @@ export class SignupDto {
 
   @IsOptional()
   @IsString()
-  name: string
+  name?: string
 
   @IsString()
   @IsOptional()
@@ -28,17 +42,21 @@ export class SignupDto {
 
   @IsEnum(StatusEnum)
   @IsOptional()
-  state: StatusEnum
+  state?: StatusEnum
 
   @IsOptional()
   @IsString()
-  phone: string
+  phone?: string
 
   @IsOptional()
   @IsString()
-  address: string
-  @IsString()
-  uniqueId: string
-  @IsString()
-  captcha: string
+  address?: string
+
+  @IsOptional()
+  @IsArray()
+  roles?: Role[]
+
+  @IsOptional()
+  @IsArray()
+  organizations?: Organization[]
 }

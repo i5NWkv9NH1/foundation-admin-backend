@@ -24,7 +24,6 @@ export class AuthController {
 
   @Post('signin')
   async signin(@Body() signinDto: SigninDto) {
-    this.logger.debug(signinDto)
     return this.authService.signin(signinDto)
   }
 
@@ -34,7 +33,8 @@ export class AuthController {
   }
 
   @Post('logout')
-  async logout(@Body() { accessToken, refreshToken }: LogoutDto) {
+  async logout(@Body() logoutDto: LogoutDto) {
+    const { accessToken, refreshToken } = logoutDto
     return this.authService.logout({ accessToken, refreshToken })
   }
 }

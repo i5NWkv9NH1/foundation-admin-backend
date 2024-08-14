@@ -1,7 +1,13 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common'
+import {
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  Injectable
+} from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 import { Actions } from 'src/shared/decorators'
 import { AccountService } from 'src/system/account/account.service'
+
 /**
  * @see {Actions}
  */
@@ -20,6 +26,7 @@ export class RolesGuard implements CanActivate {
     if (isPublic) {
       return true
     }
+
     const requiredActions = this.reflector.get<string[]>(
       'actions',
       context.getHandler()
@@ -29,12 +36,20 @@ export class RolesGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest()
-    const accountId = request.user?.id
+    const accountId = request.account?.id
     if (!accountId) {
-      return false
+      throw new ForbiddenException('No account ID found in request')
     }
 
     const allowedActions = await this.accountService.getAllowActions(accountId)
-    return requiredActions.every((action) => allowedActions.includes(action))
+    const hasPermission = requiredActions.every((action) =>
+      allowedActions.includes(action)
+    )
+
+    if (!hasPermission) {
+      throw new ForbiddenException('Access denied: insufficient permissions')
+    }
+
+    return hasPermission
   }
 }

@@ -8,6 +8,8 @@ import { AccountService } from '../account/account.service'
 import { Account } from '../account/entities/account.entity'
 import { Action } from '../action/entities/action.entity'
 import { Menu } from '../menu/entities/menu.entity'
+import { Organization } from '../organization/entities/organization.entity'
+import { Role } from '../role/entities/role.entity'
 import { AuthController } from './auth.controller'
 import { AuthService } from './auth.service'
 import { BlacklistedTokensService } from './blacklisted-token.service'
@@ -27,7 +29,7 @@ import { RolesGuard } from './roles.guard'
       }),
       inject: [ConfigService]
     }),
-    TypeOrmModule.forFeature([Account, Action, Menu]),
+    TypeOrmModule.forFeature([Account, Action, Menu, Role, Organization]),
     CaptchaModule
   ],
   controllers: [AuthController],

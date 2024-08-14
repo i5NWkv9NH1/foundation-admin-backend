@@ -1,42 +1,47 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException
+} from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { BaseService } from 'src/shared/providers/base.service'
-import { Repository, SelectQueryBuilder } from 'typeorm'
+import { Brackets, In, Repository, SelectQueryBuilder } from 'typeorm'
 import { Action } from '../action/entities/action.entity'
+import { Organization } from '../organization/entities/organization.entity'
 import { Role } from '../role/entities/role.entity'
+import { CreateAccountDto } from './dto/create-account.dto'
+import { UpdateAccountDto } from './dto/update-account.dto'
 import { Account } from './entities/account.entity'
 
 @Injectable()
 export class AccountService extends BaseService<Account> {
+  protected logger: Logger = new Logger(AccountService.name)
   constructor(
     @InjectRepository(Account)
     private readonly accountRepository: Repository<Account>,
     @InjectRepository(Action)
-    private actionRepository: Repository<Action>
+    private readonly actionRepository: Repository<Action>,
+    @InjectRepository(Role)
+    private readonly roleRepository: Repository<Role>,
+    @InjectRepository(Organization)
+    private readonly organizationRepo: Repository<Organization>
   ) {
     super(accountRepository)
   }
 
-  // 创建查询构建器，定义表的别名
   protected createQueryBuilder(): SelectQueryBuilder<Account> {
     return this.accountRepository.createQueryBuilder('account')
   }
-  // 应用自定义的查询逻辑
-  // ? 不设置全局
-  // ? 在单个业务逻辑中设置
+
   protected applyCustomizations(
     qb: SelectQueryBuilder<Account>
   ): SelectQueryBuilder<Account> {
-    return (
-      qb
-        //
-        .leftJoinAndSelect('account.organizations', 'organization')
-        .leftJoinAndSelect('account.roles', 'role')
-    )
-    // .orderBy('account.createdAt', 'DESC')
+    return qb
+      .leftJoinAndSelect('account.organizations', 'organization')
+      .leftJoinAndSelect('account.roles', 'role')
   }
 
-  // 自定义过滤逻辑
   protected applyFilters(
     qb: SelectQueryBuilder<Account>,
     filters: Record<string, any>
@@ -45,12 +50,9 @@ export class AccountService extends BaseService<Account> {
       const value = filters[key]
       if (value) {
         if (key === 'organizationId') {
-          // 确保在 `JOIN` 语句中加入组织表，并在 `WHERE` 条件中过滤
-          qb
-            // .leftJoin('account.organizations', 'organization')
-            .andWhere('organization.id = :organizationId', {
-              organizationId: value
-            })
+          qb.andWhere('organization.id = :organizationId', {
+            organizationId: value
+          })
         } else if (key === 'startDate' || key === 'endDate') {
           if (key === 'startDate') {
             qb.andWhere('account.createdAt >= :startDate', { startDate: value })
@@ -58,28 +60,45 @@ export class AccountService extends BaseService<Account> {
             qb.andWhere('account.createdAt <= :endDate', { endDate: value })
           }
         } else if (key === 'status') {
-          // -1 all
           if (value !== 'ALL') {
-            qb.where('account.status = :status', { status: value })
+            qb.andWhere('account.status = :status', { status: value })
           }
+        } else if (key === 'roleId') {
+          qb.andWhere('role.id = :roleId', {
+            roleId: value
+          })
+        } else if (key === 'text') {
+          qb.andWhere(
+            new Brackets((qb) => {
+              qb.orWhere('account.username LIKE :search', {
+                search: `%${value}%`
+              })
+                .orWhere('account.address LIKE :search', {
+                  search: `%${value}%`
+                })
+                .orWhere('account.name LIKE :search', { search: `%${value}%` })
+            })
+          )
         } else {
-          // TODO: update text search LIKE in varchar columns
           qb.andWhere(`account.${key} LIKE :${key}`, { [key]: `%${value}%` })
         }
       }
     })
   }
 
-  // ? 单个查询时自定义业务逻辑
   async findOne(id: string): Promise<Account> {
-    const qb = this.createQueryBuilder()
-    return qb
-      .where('account.createdAt IS NOT NULL')
-      .andWhere('account.id = :id', { id })
-      .leftJoinAndSelect('account.organizations', 'organization')
-      .leftJoinAndSelect('account.roles', 'role')
-      .orderBy('account.createdAt', 'DESC')
-      .getOne()
+    try {
+      const qb = this.createQueryBuilder()
+      return qb
+        .where('account.createdAt IS NOT NULL')
+        .andWhere('account.id = :id', { id })
+        .leftJoinAndSelect('account.organizations', 'organization')
+        .leftJoinAndSelect('account.roles', 'role')
+        .orderBy('account.createdAt', 'DESC')
+        .getOne()
+    } catch (error) {
+      throw new BadRequestException('Account not found')
+    }
   }
 
   async getUserRoles(id: string): Promise<Role[]> {
@@ -115,5 +134,21 @@ export class AccountService extends BaseService<Account> {
       where: { username },
       relations: ['roles', 'organizations']
     })
+  }
+
+  async createAccount(entity: CreateAccountDto) {
+    return await this.accountRepository.save(entity)
+  }
+
+  async updateAccount(id: string, entity: UpdateAccountDto) {
+    const account = await this.findOne(id)
+    const organizations = await this.organizationRepo.findBy({
+      id: In(entity.organizationIds)
+    })
+    if (organizations.length !== entity.organizationIds.length) {
+      throw new BadRequestException('Some organizations not found')
+    }
+    account.organizations = organizations
+    return await this.accountRepository.save(account)
   }
 }
