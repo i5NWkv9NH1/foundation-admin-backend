@@ -1,7 +1,7 @@
 import { BaseEntity } from 'src/shared/entities/base.entity'
 import { Account } from 'src/system/account/entities/account.entity'
 import { Action } from 'src/system/action/entities/action.entity'
-import { Column, Entity, Index, JoinTable, ManyToMany } from 'typeorm'
+import { Column, Entity, JoinTable, ManyToMany } from 'typeorm'
 
 export enum RoleRelations {
   Actions = 'actions'
@@ -10,15 +10,20 @@ export enum StatusEnum {
   DISABLE = 'DISABLE',
   ENABLE = 'ENABLE'
 }
+export enum RoleName {
+  Root = 'ROOT',
+  Admin = 'ADMIN',
+  User = 'USER',
+  GUEST = 'GUEST'
+}
 
 @Entity('sys_role')
 export class Role extends BaseEntity {
   @Column()
   label: string
 
-  @Index()
-  @Column({ unique: true })
-  name: string
+  @Column({ type: 'enum', enum: RoleName, default: RoleName.User })
+  name: RoleName
 
   @Column({
     type: 'enum',

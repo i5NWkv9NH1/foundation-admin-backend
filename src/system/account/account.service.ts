@@ -4,12 +4,21 @@ import {
   Logger,
   NotFoundException
 } from '@nestjs/common'
-import { InjectRepository } from '@nestjs/typeorm'
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm'
 import { BaseService } from 'src/shared/providers/base.service'
-import { Brackets, In, Repository, SelectQueryBuilder } from 'typeorm'
+import {
+  Brackets,
+  DataSource,
+  In,
+  Repository,
+  SelectQueryBuilder
+} from 'typeorm'
 import { Action } from '../action/entities/action.entity'
-import { Organization } from '../organization/entities/organization.entity'
-import { Role } from '../role/entities/role.entity'
+import {
+  Organization,
+  TypeEnum
+} from '../organization/entities/organization.entity'
+import { Role, RoleName } from '../role/entities/role.entity'
 import { CreateAccountDto } from './dto/create-account.dto'
 import { UpdateAccountDto } from './dto/update-account.dto'
 import { Account } from './entities/account.entity'
@@ -25,7 +34,9 @@ export class AccountService extends BaseService<Account> {
     @InjectRepository(Role)
     private readonly roleRepository: Repository<Role>,
     @InjectRepository(Organization)
-    private readonly organizationRepo: Repository<Organization>
+    private readonly organizationRepo: Repository<Organization>,
+    @InjectDataSource()
+    private readonly dataSource: DataSource
   ) {
     super(accountRepository)
   }
@@ -138,10 +149,44 @@ export class AccountService extends BaseService<Account> {
     })
   }
 
-  async createAccount(entity: CreateAccountDto) {
-    return await this.accountRepository.save(entity)
+  async createAccount(entity: CreateAccountDto): Promise<Account> {
+    return await this.dataSource.transaction(
+      async (transactionalEntityManager) => {
+        const existingAccount = await transactionalEntityManager.findOne(
+          Account,
+          { where: { username: entity.username } }
+        )
+        if (existingAccount) {
+          throw new BadRequestException('Account already exists')
+        }
+
+        const account = transactionalEntityManager.create(Account, entity)
+
+        const [company, role] = await Promise.all([
+          transactionalEntityManager.findOne(Organization, {
+            where: { type: TypeEnum.COMPANY }
+          }),
+          transactionalEntityManager.findOne(Role, {
+            where: { name: RoleName.User }
+          })
+        ])
+
+        if (!company) {
+          throw new BadRequestException('Default organization not found')
+        }
+        if (!role) {
+          throw new BadRequestException('Default role not found')
+        }
+
+        account.organizations = [company]
+        account.roles = [role]
+
+        return await transactionalEntityManager.save(Account, account)
+      }
+    )
   }
 
+  // ? 更新账户组织
   async updateAccount(id: string, entity: UpdateAccountDto) {
     const account = await this.findOne(id)
 

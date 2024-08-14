@@ -18,7 +18,7 @@ import {
   Organization,
   TypeEnum
 } from '../organization/entities/organization.entity'
-import { Role } from '../role/entities/role.entity'
+import { Role, RoleName } from '../role/entities/role.entity'
 import { BlacklistedTokensService } from './blacklisted-token.service'
 import { LogoutDto } from './dto/logout.dto'
 import { RefreshTokenDto } from './dto/refresh-token.dto'
@@ -60,7 +60,9 @@ export class AuthService {
     let organizations = rest.organizations || []
 
     if (roles.length === 0) {
-      const userRole = await this.roleRepo.findOne({ where: { name: 'USER' } })
+      const userRole = await this.roleRepo.findOne({
+        where: { name: RoleName.User }
+      })
       if (userRole) {
         roles = [userRole]
       }

@@ -64,10 +64,7 @@ export class Account extends BaseEntity {
   roles: Role[]
 
   // TODO
-  @ManyToMany(() => Organization, (organization) => organization.accounts, {
-    cascade: ['insert', 'update'],
-    onDelete: 'CASCADE'
-  })
+  @ManyToMany(() => Organization, (organization) => organization.accounts)
   @JoinTable({
     name: 'sys_account_organization', // 中间表名称
     joinColumn: { name: 'accountId' }, // 当前实体的连接字段
