@@ -55,7 +55,8 @@ export class Account extends BaseEntity {
   @Column({ select: false, nullable: true })
   originPassword: string | null
 
-  @ManyToMany(() => Role, (role) => role.accounts)
+  // ? 删除账户后解绑中间表
+  @ManyToMany(() => Role, (role) => role.accounts, { onDelete: 'CASCADE' })
   // @JoinTable({
   //   name: 'sys_account_role',
   //   joinColumn: { name: 'accountId' },

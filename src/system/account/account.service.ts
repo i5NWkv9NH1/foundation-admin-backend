@@ -140,11 +140,15 @@ export class AccountService extends BaseService<Account> {
     }
 
     const allowedActions = new Set<string>()
+    const testActions = []
     account.roles.forEach((role) => {
       role.actions.forEach((action) => {
         allowedActions.add(action.code)
+        testActions.push(action.code)
       })
     })
+
+    this.logger.debug('actions: ', testActions)
 
     return Array.from(allowedActions)
   }

@@ -19,12 +19,8 @@ export class MenuService extends BaseService<Menu> {
   }
 
   protected createQueryBuilder(): SelectQueryBuilder<Menu> {
-    return this.menuRepo.createQueryBuilder('menu')
-  }
-  protected applyCustomizations(
-    qb: SelectQueryBuilder<Menu>
-  ): SelectQueryBuilder<Menu> {
-    return qb
+    return this.menuRepo
+      .createQueryBuilder('menu')
       .leftJoinAndSelect('menu.parent', 'parent')
       .leftJoinAndSelect('menu.children', 'children')
       .leftJoinAndSelect('menu.actions', 'actions')
@@ -38,18 +34,21 @@ export class MenuService extends BaseService<Menu> {
       qb.andWhere(`menu.${key} LIKE :${key}`, { [key]: `%${value}%` })
     })
   }
+  protected applyCustomizations(qb: SelectQueryBuilder<Menu>): void {
+    qb.orderBy('menu.sort', 'ASC')
+  }
 
   async findOne(id: string): Promise<Menu> {
-    const menu = await this.menuRepo
-      .createQueryBuilder('menu')
-      .leftJoinAndSelect('menu.children', 'children')
-      .leftJoinAndSelect('menu.actions', 'actions')
-      .leftJoinAndSelect('menu.parent', 'parent')
+    // const menu = await this.menuRepo
+    //   .createQueryBuilder('menu')
+    //   .leftJoinAndSelect('menu.children', 'children')
+    //   .leftJoinAndSelect('menu.actions', 'actions')
+    //   .leftJoinAndSelect('menu.parent', 'parent')
+    //   .where('menu.id = :id', { id })
+    //   .getOne()
+    return await this.createQueryBuilder()
       .where('menu.id = :id', { id })
       .getOne()
-    // const qb = this.menuRepo.createQueryBuilder('menu')
-    // return await super.findOne(id, qb)
-    return menu
   }
 
   async create(entity: Menu): Promise<Menu> {

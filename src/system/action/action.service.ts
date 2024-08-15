@@ -16,11 +16,6 @@ export class ActionService extends BaseService<Action> {
   protected createQueryBuilder(): SelectQueryBuilder<Action> {
     return this.repo.createQueryBuilder('action')
   }
-  protected applyCustomizations(
-    qb: SelectQueryBuilder<Action>
-  ): SelectQueryBuilder<Action> {
-    return qb.orderBy('action.menuId', 'DESC')
-  }
   protected applyFilters(
     qb: SelectQueryBuilder<Action>,
     filters: Record<string, any>
@@ -29,6 +24,11 @@ export class ActionService extends BaseService<Action> {
       const value = filters[key]
       qb.andWhere(`action.${key} LIKE :${key}`, { [key]: `%${value}%` })
     })
+  }
+  protected applyCustomizations(
+    qb: SelectQueryBuilder<Action>
+  ): SelectQueryBuilder<Action> {
+    return qb.orderBy('action.sort', 'ASC')
   }
 
   async findActionsByIds(ids: string[]): Promise<Action[]> {

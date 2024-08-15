@@ -2,7 +2,8 @@ import {
   CanActivate,
   ExecutionContext,
   ForbiddenException,
-  Injectable
+  Injectable,
+  Logger
 } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 import { Actions } from 'src/shared/decorators'
@@ -13,6 +14,7 @@ import { AccountService } from 'src/system/account/account.service'
  */
 @Injectable()
 export class RolesGuard implements CanActivate {
+  private logger = new Logger(RolesGuard.name)
   constructor(
     private reflector: Reflector,
     private accountService: AccountService
@@ -45,6 +47,8 @@ export class RolesGuard implements CanActivate {
     const hasPermission = requiredActions.every((action) =>
       allowedActions.includes(action)
     )
+    this.logger.debug('new Set allowedActions: ', allowedActions)
+    this.logger.debug('hasPermissions: ', hasPermission)
 
     if (!hasPermission) {
       throw new ForbiddenException('Access denied: insufficient permissions')
