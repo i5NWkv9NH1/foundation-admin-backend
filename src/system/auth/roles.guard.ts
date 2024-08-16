@@ -47,8 +47,6 @@ export class RolesGuard implements CanActivate {
     const hasPermission = requiredActions.every((action) =>
       allowedActions.includes(action)
     )
-    this.logger.debug('new Set allowedActions: ', allowedActions)
-    this.logger.debug('hasPermissions: ', hasPermission)
 
     if (!hasPermission) {
       throw new ForbiddenException('Access denied: insufficient permissions')

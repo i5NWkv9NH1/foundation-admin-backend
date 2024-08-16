@@ -32,9 +32,7 @@ export abstract class BaseService<T extends BaseEntity> {
   ) {
     const qb = this.createQueryBuilder()
     this.applyFilters(qb, filters)
-    this.logger.debug('After filters', (await qb.getMany()).length)
     this.applyCustomizations(qb)
-    this.logger.debug('After customize', (await qb.getMany()).length)
 
     const totalItems = await qb.getCount()
     const skip = itemsPerPage > 0 ? (page - 1) * itemsPerPage : 0
@@ -53,14 +51,15 @@ export abstract class BaseService<T extends BaseEntity> {
   }
 
   async findOne(id: string): Promise<T> {
-    return await this.repository.findOne({
-      where: {
-        id
-      } as FindOptionsWhere<T>
-    })
-    // const qb = this.createQueryBuilder()
-    // this.applyCustomizations(qb)
-    // return qb.getOne()
+    // return await this.repository.findOne({
+    //   where: {
+    //     id
+    //   } as FindOptionsWhere<T>
+    // })
+    const qb = this.createQueryBuilder()
+    this.applyCustomizations(qb)
+    qb.where('action.id = :id', { id })
+    return qb.getOne()
   }
 
   async create(entity: T): Promise<T> {

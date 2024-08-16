@@ -148,8 +148,6 @@ export class AccountService extends BaseService<Account> {
       })
     })
 
-    this.logger.debug('actions: ', testActions)
-
     return Array.from(allowedActions)
   }
 

@@ -23,7 +23,6 @@ export class RoleService extends BaseService<Role> {
   }
   protected createQueryBuilder(): SelectQueryBuilder<Role> {
     const qb = this.roleRepo.createQueryBuilder('role')
-    this.logger.debug(this.createQueryBuilder.name)
     return qb
     //! filter ROOT role
     // .andWhere('role.name != :name', { name: 'ROOT' })
@@ -58,7 +57,6 @@ export class RoleService extends BaseService<Role> {
     qb: SelectQueryBuilder<Role>,
     filters: Record<string, any>
   ): void {
-    this.logger.debug(this.applyFilters.name, filters)
     Object.keys(filters).forEach((key) => {
       const value = filters[key]
       // 仅当 value 不为空或未定义时才进行过滤
@@ -86,7 +84,6 @@ export class RoleService extends BaseService<Role> {
   }
 
   protected applyCustomizations(qb: SelectQueryBuilder<Role>): void {
-    this.logger.debug(this.applyCustomizations.name)
     /**
      * ! WHERE 子句的逻辑是累加的，
      */
@@ -147,7 +144,6 @@ export class RoleService extends BaseService<Role> {
       where: { id: roleId },
       relations: ['actions']
     })
-    this.logger.debug('Role: ', role)
 
     if (!role) {
       throw new BadRequestException('Role not found')
@@ -155,7 +151,6 @@ export class RoleService extends BaseService<Role> {
 
     // 过滤掉与该菜单不相关的 action
     const actionsForMenu = actions.filter((action) => action.menuId === menuId)
-    this.logger.debug('Actions in Menu Id: ', menuId, actionsForMenu)
 
     // 如果有需要新增的 actions
     if (actionsForMenu.length > 0) {
@@ -182,6 +177,7 @@ export class RoleService extends BaseService<Role> {
     const qb = this.roleRepo
       .createQueryBuilder('role')
       .innerJoinAndSelect('role.actions', 'action')
+      .innerJoinAndSelect('action.menu', 'menu')
       .where('role.id = :roleId', { roleId })
       .andWhere('action.menuId = :menuId', { menuId })
       .select([
@@ -193,6 +189,8 @@ export class RoleService extends BaseService<Role> {
         'action.code',
         'action.icon',
         'action.menuId',
+        //! return to frontend which can be check whether if selected item
+        'menu',
         'action.sort'
       ])
       .orderBy('action.sort', 'ASC')
