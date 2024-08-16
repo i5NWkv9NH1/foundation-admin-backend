@@ -12,17 +12,18 @@ export abstract class BaseService<T extends BaseEntity> {
   protected readonly logger = new Logger(BaseService.name)
   constructor(private readonly repository: Repository<T>) {}
 
-  // 抽象方法：子类实现自定义的查询构建器
+  /**
+   * @description Query hooks
+   */
+  // alias, and (options: joinin, anything)
   protected abstract createQueryBuilder(): SelectQueryBuilder<T>
-  // 抽象方法：子类实现自定义的查询逻辑
-  protected abstract applyCustomizations(
-    qb: SelectQueryBuilder<T>
-  ): SelectQueryBuilder<T>
-  // 抽象方法：子类实现自定义的过滤逻辑
+  // controller filters
   protected abstract applyFilters(
     qb: SelectQueryBuilder<T>,
     filters: Record<string, any>
   ): void
+  // Anything after fitlers, such as orderby
+  protected abstract applyCustomizations(qb: SelectQueryBuilder<T>): void
 
   async findAll(
     page: number = 1,
@@ -30,8 +31,8 @@ export abstract class BaseService<T extends BaseEntity> {
     filters: Record<string, any> = {}
   ) {
     const qb = this.createQueryBuilder()
-    this.applyCustomizations(qb)
     this.applyFilters(qb, filters)
+    this.applyCustomizations(qb)
 
     const totalItems = await qb.getCount()
     const skip = itemsPerPage > 0 ? (page - 1) * itemsPerPage : 0
@@ -50,14 +51,15 @@ export abstract class BaseService<T extends BaseEntity> {
   }
 
   async findOne(id: string): Promise<T> {
-    return await this.repository.findOne({
-      where: {
-        id
-      } as FindOptionsWhere<T>
-    })
-    // const qb = this.createQueryBuilder()
-    // this.applyCustomizations(qb)
-    // return qb.getOne()
+    // return await this.repository.findOne({
+    //   where: {
+    //     id
+    //   } as FindOptionsWhere<T>
+    // })
+    const qb = this.createQueryBuilder()
+    this.applyCustomizations(qb)
+    qb.where('action.id = :id', { id })
+    return qb.getOne()
   }
 
   async create(entity: T): Promise<T> {

@@ -14,6 +14,9 @@ export class Action extends BaseEntity {
   @Column()
   icon: string
 
+  @Column({ nullable: true, default: 1 })
+  sort: number
+
   @Column('uuid', { name: 'menuId' })
   menuId: string
 

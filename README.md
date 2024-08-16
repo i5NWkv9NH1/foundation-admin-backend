@@ -384,3 +384,22 @@ class Controller {
   }
 }
 ```
+
+## Query
+
+```ts
+export abstract class BaseService {
+  /**
+   * @description Query hooks
+   */
+  // alias, and (options: joinin, anything)
+  protected abstract createQueryBuilder(): SelectQueryBuilder<T>
+  // controller filters
+  protected abstract applyFilters(
+    qb: SelectQueryBuilder<T>,
+    filters: Record<string, any>
+  ): void
+  // Anything after fitlers, such as orderby
+  protected abstract applyCustomizations(qb: SelectQueryBuilder<T>): void
+}
+```

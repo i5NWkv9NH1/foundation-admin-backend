@@ -55,6 +55,6 @@ export class Menu extends BaseEntity {
   @OneToMany(() => Menu, (menu) => menu.parent)
   children: Menu[]
 
-  @OneToMany(() => Action, (action) => action.menu)
+  @OneToMany(() => Action, (action) => action.menu, { onDelete: 'CASCADE' })
   actions: Action[]
 }

@@ -8,14 +8,17 @@ import {
   ParseIntPipe,
   Post,
   Put,
-  Query
+  Query,
+  UseGuards
 } from '@nestjs/common'
 import { DeepPartial } from 'typeorm'
 import { Actions } from '../decorators'
 import { BaseEntity } from '../entities/base.entity'
 import { BaseService } from './base.service'
+import { JwtAuthGuard } from 'src/system/auth/jwt-auth.guard'
+import { RolesGuard } from 'src/system/auth/roles.guard'
 
-// @UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export abstract class BaseController<T extends BaseEntity> {
   protected readonly logger = new Logger(BaseController.name)
   constructor(private readonly service: BaseService<T>) {}

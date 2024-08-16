@@ -28,6 +28,6 @@ export class MenuController extends BaseController<Menu> {
 
   @Delete(':id')
   async delete(@Param('id') id: string) {
-    return await this.menuService.remove(id)
+    return await this.menuService.delete(id)
   }
 }
