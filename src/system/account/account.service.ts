@@ -71,9 +71,12 @@ export class AccountService extends BaseService<Account> {
             qb.andWhere('account.status = :status', { status: value })
           }
         } else if (key === 'roleId') {
-          qb.andWhere('role.id = :roleId', {
-            roleId: value
-          })
+          qb
+            //
+            .andWhere('role.id = :roleId', {
+              roleId: value
+            })
+          // .andWhere(`role.name != :name`, { name: 'ROOT' })
         } else if (key === 'gender') {
           qb.andWhere('account.gender =:gender', { gender: value })
         } else if (key === 'text') {
@@ -98,8 +101,8 @@ export class AccountService extends BaseService<Account> {
   protected applyCustomizations(qb: SelectQueryBuilder<Account>): void {
     qb
       //
-      // .andWhere(`role.name != :name`, { name: 'ROOT' })
-      .andWhere('role.name IS NULL OR role.name != :name', { name: 'ROOT' })
+      // .where(`role.name != :name`, { name: 'ROOT' })
+      // .andWhere('role.name IS NULL OR role.name != :name', { name: 'ROOT' })
       //
       .orderBy('account.createdAt', 'ASC')
   }
@@ -223,5 +226,31 @@ export class AccountService extends BaseService<Account> {
     }
     // 保存插入组织的实体
     return await this.accountRepository.save({ ...newAccount })
+  }
+
+  async findAll(
+    page: number = 1,
+    itemsPerPage: number = 10,
+    filters: Record<string, any> = {}
+  ) {
+    this.logger.debug(filters)
+    const qb = this.createQueryBuilder()
+    this.applyFilters(qb, filters)
+    this.applyCustomizations(qb)
+
+    const totalItems = await qb.getCount()
+    const skip = itemsPerPage > 0 ? (page - 1) * itemsPerPage : 0
+    const take = itemsPerPage > 0 ? itemsPerPage : totalItems
+    const items = await qb.skip(skip).take(take).getMany()
+
+    return {
+      items,
+      meta: {
+        page,
+        itemsPerPage,
+        itemsCount: totalItems,
+        pagesCount: Math.ceil(totalItems / itemsPerPage)
+      }
+    }
   }
 }
