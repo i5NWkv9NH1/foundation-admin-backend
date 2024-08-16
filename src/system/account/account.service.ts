@@ -98,7 +98,8 @@ export class AccountService extends BaseService<Account> {
   protected applyCustomizations(qb: SelectQueryBuilder<Account>): void {
     qb
       //
-      .andWhere(`role.name != :name`, { name: 'ROOT' })
+      // .andWhere(`role.name != :name`, { name: 'ROOT' })
+      .andWhere('role.name IS NULL OR role.name != :name', { name: 'ROOT' })
       //
       .orderBy('account.createdAt', 'ASC')
   }

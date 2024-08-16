@@ -201,7 +201,8 @@ export class AuthService {
     const menus = await this.menuRepo.find({
       where: {
         id: In(allMenuIds)
-      }
+      },
+      relations: ['parent', 'children']
     })
     return { actions, menus }
   }

@@ -42,7 +42,7 @@ export class Role extends BaseEntity {
   sort: number
 
   // ? 删除角色后解绑中间表
-  @ManyToMany(() => Account, (_) => _.roles, { onDelete: 'CASCADE' })
+  @ManyToMany(() => Account, (_) => _.roles, { cascade: true })
   @JoinTable({
     name: 'sys_account_role',
     joinColumn: { name: 'roleId' },

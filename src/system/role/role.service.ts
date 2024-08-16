@@ -90,7 +90,7 @@ export class RoleService extends BaseService<Role> {
     qb
       // .andWhere('role.name != :name', { name: 'ROOT' })
       //
-      .andWhere(`role.name != :excludedName`, { excludedName: 'ROOT' })
+      // .andWhere(`role.name != :excludedName`, { excludedName: 'ROOT' })
       .orderBy('role.sort', 'ASC')
     // .leftJoinAndSelect('role.accounts', 'account')
     // .leftJoinAndSelect('role.actions', 'action')
