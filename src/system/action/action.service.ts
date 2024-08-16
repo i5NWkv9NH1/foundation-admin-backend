@@ -35,6 +35,31 @@ export class ActionService extends BaseService<Action> {
     qb.orderBy('action.sort', 'ASC')
   }
 
+  async findAll(
+    page: number = 1,
+    itemsPerPage: number = 10,
+    filters: Record<string, any> = {}
+  ) {
+    const qb = this.createQueryBuilder()
+    this.applyFilters(qb, filters)
+    this.applyCustomizations(qb)
+
+    const totalItems = await qb.getCount()
+    const skip = itemsPerPage > 0 ? (page - 1) * itemsPerPage : 0
+    const take = itemsPerPage > 0 ? itemsPerPage : totalItems
+    const items = await qb.skip(skip).take(take).getMany()
+
+    return {
+      items,
+      meta: {
+        page,
+        itemsPerPage,
+        itemsCount: totalItems,
+        pagesCount: Math.ceil(totalItems / itemsPerPage)
+      }
+    }
+  }
+
   async findActionsByIds(ids: string[]): Promise<Action[]> {
     return this.repo.findBy({
       id: In(ids)

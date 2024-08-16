@@ -51,15 +51,11 @@ export abstract class BaseService<T extends BaseEntity> {
   }
 
   async findOne(id: string): Promise<T> {
-    // return await this.repository.findOne({
-    //   where: {
-    //     id
-    //   } as FindOptionsWhere<T>
-    // })
-    const qb = this.createQueryBuilder()
-    this.applyCustomizations(qb)
-    qb.where('action.id = :id', { id })
-    return qb.getOne()
+    return await this.repository.findOne({
+      where: {
+        id
+      } as FindOptionsWhere<T>
+    })
   }
 
   async create(entity: T): Promise<T> {
