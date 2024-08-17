@@ -49,9 +49,12 @@ export class AuthService {
   ) {}
 
   async signup(signupDto: SignupDto): Promise<{
-    accessToken: string
-    refreshToken: string
+    token: {
+      accessToken: string
+      refreshToken: string
+    }
     account: Account
+    permissions: { actions: Action[]; menus: Menu[] }
   }> {
     const { username, password, uniqueId, captcha, ...rest } = signupDto
 
@@ -99,8 +102,10 @@ export class AuthService {
   }
 
   async signin(signinDto: SigninDto): Promise<{
-    accessToken: string
-    refreshToken: string
+    token: {
+      accessToken: string
+      refreshToken: string
+    }
     account: Account
     permissions: { actions: Action[]; menus: Menu[] }
   }> {
@@ -125,8 +130,10 @@ export class AuthService {
     const permissions = await this.findPermissions(account)
 
     return {
-      accessToken,
-      refreshToken,
+      token: {
+        accessToken,
+        refreshToken
+      },
       account,
       permissions
     }
@@ -170,9 +177,11 @@ export class AuthService {
   }
 
   // typeorm
-  private async findPermissions(
-    account: Account
-  ): Promise<{ actions: Action[]; menus: Menu[] }> {
+  public async findPermissions(account: Account): //
+  Promise<{
+    actions: Action[]
+    menus: Menu[]
+  }> {
     // 获取用户的角色ID数组
     const roleIds = account.roles.map((role) => role.id)
 

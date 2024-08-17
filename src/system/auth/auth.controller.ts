@@ -1,4 +1,12 @@
-import { Body, Logger, Post, UseGuards } from '@nestjs/common'
+import {
+  BadRequestException,
+  Body,
+  Logger,
+  Post,
+  Req,
+  UseGuards
+} from '@nestjs/common'
+import { Request } from 'express'
 import { Public, SystemController } from 'src/shared/decorators'
 import { AuthService } from './auth.service'
 import { LogoutDto } from './dto/logout.dto'
@@ -10,7 +18,7 @@ import { JwtAuthGuard } from './jwt-auth.guard'
 @SystemController('auth')
 @UseGuards(JwtAuthGuard)
 export class AuthController {
-  private logger = new Logger(AuthController.name)
+  protected logger = new Logger(AuthController.name)
   constructor(private readonly authService: AuthService) {}
 
   @Post('signup')
@@ -35,5 +43,16 @@ export class AuthController {
   async logout(@Body() logoutDto: LogoutDto) {
     const { accessToken, refreshToken } = logoutDto
     return this.authService.logout({ accessToken, refreshToken })
+  }
+
+  @Post('me')
+  async findMe(@Req() req: Request) {
+    const account = req.account
+    if (!account) throw new BadRequestException('Find me failed')
+    const permissions = await this.authService.findPermissions(req.account)
+    return {
+      permissions,
+      account
+    }
   }
 }
