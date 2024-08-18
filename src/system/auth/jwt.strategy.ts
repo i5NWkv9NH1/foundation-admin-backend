@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common'
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { PassportStrategy } from '@nestjs/passport'
 import { ExtractJwt, Strategy } from 'passport-jwt'
@@ -8,6 +8,8 @@ import { BlacklistedTokensService } from './blacklisted-token.service'
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
+  protected logger = new Logger(JwtStrategy.name)
+
   constructor(
     protected configService: ConfigService,
     private accountService: AccountService,
@@ -30,7 +32,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (await this.blacklistedTokensService.isTokenBlacklisted(token)) {
       throw new UnauthorizedException('Token has been blacklisted')
     }
-
+    this.logger.debug(payload)
     const account = await this.accountService.findOne(payload.sub)
 
     if (!account) {

@@ -214,11 +214,9 @@ export class AccountService {
     return await this.accountRepository.save({ ...account, ...updateFields })
   }
 
-  async getAllowActions(accountId: string): Promise<string[]> {
-    const account = await this.accountRepository.findOne({
-      where: { id: accountId },
-      relations: ['roles', 'roles.actions']
-    })
+  async getAllowActions({ username }: { username: string }): Promise<string[]> {
+    this.logger.debug(username)
+    const account = await this.findByUsername(username)
 
     if (!account) {
       throw new NotFoundException('Account not found')
@@ -267,10 +265,12 @@ export class AccountService {
   }
 
   async findByUsername(username: string) {
-    return await this.accountRepository.findOne({
+    const account = await this.accountRepository.findOne({
       where: { username },
       relations: ['roles', 'organizations']
     })
+    if (!account) throw new BadRequestException('Account not found')
+    return account
   }
 
   async delete(id: string) {

@@ -73,7 +73,7 @@ export class AuthService {
       throw new BadRequestException('Username or Password incorrect')
     }
 
-    const payload = { account, sub: isExist.id }
+    const payload = { account: isExist, sub: isExist.id }
     const accessToken = this.generateToken(payload, DEFAULT_EXPIRE)
     const refreshToken = this.generateToken(payload, REFRESH_EXPIRE)
     const permissions = await this.accountService.findPermissions(isExist)
