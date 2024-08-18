@@ -1,15 +1,7 @@
-import { IsNotEmpty, IsString, Length } from 'class-validator'
+import { IsNotEmpty, IsString, IsUUID, Length } from 'class-validator'
 
-export class SigninDto {
-  @IsString()
-  @IsNotEmpty()
-  username: string
-
-  @IsString()
-  @IsNotEmpty()
-  password: string
-
-  @IsString()
+export class VerifyDto {
+  @IsUUID()
   @IsNotEmpty()
   uniqueId: string
 
@@ -17,4 +9,19 @@ export class SigninDto {
   @Length(4, 4)
   @IsNotEmpty()
   captcha: string
+}
+
+export class SigninAccountDto {
+  @IsString()
+  @IsNotEmpty()
+  username: string
+
+  @IsString()
+  @IsNotEmpty()
+  password: string
+}
+
+export class SigninDto {
+  account: SigninAccountDto
+  verify: VerifyDto
 }

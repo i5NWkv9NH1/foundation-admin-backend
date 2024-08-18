@@ -1,11 +1,4 @@
-import {
-  BadRequestException,
-  Body,
-  Logger,
-  Post,
-  Req,
-  UseGuards
-} from '@nestjs/common'
+import { Body, Logger, Post, Req, UseGuards } from '@nestjs/common'
 import { Request } from 'express'
 import { Public, SystemController } from 'src/shared/decorators'
 import { AuthService } from './auth.service'
@@ -48,11 +41,6 @@ export class AuthController {
   @Post('me')
   async findMe(@Req() req: Request) {
     const account = req.account
-    if (!account) throw new BadRequestException('Find me failed')
-    const permissions = await this.authService.findPermissions(req.account)
-    return {
-      permissions,
-      account
-    }
+    return this.authService.findMe(account)
   }
 }

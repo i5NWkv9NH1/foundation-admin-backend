@@ -5,8 +5,9 @@ import {
   NotFoundException
 } from '@nestjs/common'
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm'
+import { hash } from 'bcrypt'
+import { chain, uniq } from 'lodash'
 import { DEFAULT_ROLE_NAME } from 'src/constants'
-import { BaseService } from 'src/shared/providers/base.service'
 import {
   Brackets,
   DataSource,
@@ -15,6 +16,7 @@ import {
   SelectQueryBuilder
 } from 'typeorm'
 import { Action } from '../action/entities/action.entity'
+import { Menu } from '../menu/entities/menu.entity'
 import {
   Organization,
   TypeEnum
@@ -25,8 +27,9 @@ import { UpdateAccountDto } from './dto/update-account.dto'
 import { Account } from './entities/account.entity'
 
 @Injectable()
-export class AccountService extends BaseService<Account> {
+export class AccountService {
   protected logger: Logger = new Logger(AccountService.name)
+
   constructor(
     @InjectRepository(Account)
     private readonly accountRepository: Repository<Account>,
@@ -34,14 +37,16 @@ export class AccountService extends BaseService<Account> {
     private readonly actionRepository: Repository<Action>,
     @InjectRepository(Role)
     private readonly roleRepository: Repository<Role>,
+    @InjectRepository(Menu)
+    private readonly menuRepository: Repository<Menu>,
     @InjectRepository(Organization)
     private readonly organizationRepo: Repository<Organization>,
     @InjectDataSource()
     private readonly dataSource: DataSource
-  ) {
-    super(accountRepository)
-  }
+  ) {}
 
+  //#region Hooks
+  // * QueryBuilder
   protected createQueryBuilder(): SelectQueryBuilder<Account> {
     return this.accountRepository
       .createQueryBuilder('account')
@@ -49,37 +54,44 @@ export class AccountService extends BaseService<Account> {
       .leftJoinAndSelect('account.roles', 'role')
   }
 
+  // *Filters
   protected applyFilters(
     qb: SelectQueryBuilder<Account>,
     filters: Record<string, any>
   ): void {
-    Object.keys(filters).forEach((key) => {
-      const value = filters[key]
-      if (value) {
-        if (key === 'organizationId') {
+    Object.entries(filters).forEach(([key, value]) => {
+      if (!value) return
+
+      switch (key) {
+        case 'organizationId':
           qb.andWhere('organization.id = :organizationId', {
             organizationId: value
           })
-        } else if (key === 'startDate' || key === 'endDate') {
-          if (key === 'startDate') {
-            qb.andWhere('account.createdAt >= :startDate', { startDate: value })
-          } else if (key === 'endDate') {
-            qb.andWhere('account.createdAt <= :endDate', { endDate: value })
-          }
-        } else if (key === 'status') {
+          break
+
+        case 'startDate':
+          qb.andWhere('account.createdAt >= :startDate', { startDate: value })
+          break
+
+        case 'endDate':
+          qb.andWhere('account.createdAt <= :endDate', { endDate: value })
+          break
+
+        case 'status':
           if (value !== 'ALL') {
             qb.andWhere('account.status = :status', { status: value })
           }
-        } else if (key === 'roleId') {
-          qb
-            //
-            .andWhere('role.id = :roleId', {
-              roleId: value
-            })
-          // .andWhere(`role.name != :name`, { name: 'ROOT' })
-        } else if (key === 'gender') {
-          qb.andWhere('account.gender =:gender', { gender: value })
-        } else if (key === 'text') {
+          break
+
+        case 'roleId':
+          qb.andWhere('role.id = :roleId', { roleId: value })
+          break
+
+        case 'gender':
+          qb.andWhere('account.gender = :gender', { gender: value })
+          break
+
+        case 'text':
           qb.andWhere(
             new Brackets((qb) => {
               qb.orWhere('account.username LIKE :search', {
@@ -91,46 +103,115 @@ export class AccountService extends BaseService<Account> {
                 .orWhere('account.name LIKE :search', { search: `%${value}%` })
             })
           )
-        } else {
+          break
+
+        default:
           qb.andWhere(`account.${key} LIKE :${key}`, { [key]: `%${value}%` })
-        }
+          break
       }
     })
   }
 
+  // * Hooks after filters
   protected applyCustomizations(qb: SelectQueryBuilder<Account>): void {
-    qb
-      //
-      // .where(`role.name != :name`, { name: 'ROOT' })
-      // .andWhere('role.name IS NULL OR role.name != :name', { name: 'ROOT' })
-      //
-      .orderBy('account.createdAt', 'ASC')
+    qb.orderBy('account.createdAt', 'ASC')
   }
 
-  async findOne(id: string): Promise<Account> {
-    try {
-      const qb = this.createQueryBuilder()
-      return (
-        qb
-          .where('account.createdAt IS NOT NULL')
-          .andWhere('account.id = :id', { id })
-          // ? already join in first hooks
-          // .leftJoinAndSelect('account.organizations', 'organization')
-          // .leftJoinAndSelect('account.roles', 'role')
-          .orderBy('account.createdAt', 'DESC')
-          .getOne()
-      )
-    } catch (error) {
-      throw new BadRequestException('Account not found')
+  //#endregion
+
+  async findAll(
+    page: number = 1,
+    itemsPerPage: number = 10,
+    filters: Record<string, any> = {}
+  ) {
+    const qb = this.createQueryBuilder()
+    this.applyFilters(qb, filters)
+    this.applyCustomizations(qb)
+
+    const totalItems = await qb.getCount()
+    const skip = itemsPerPage > 0 ? (page - 1) * itemsPerPage : 0
+    const take = itemsPerPage > 0 ? itemsPerPage : totalItems
+    const items = await qb.skip(skip).take(take).getMany()
+
+    return {
+      items,
+      meta: {
+        page,
+        itemsPerPage,
+        itemsCount: totalItems,
+        pagesCount: Math.ceil(totalItems / itemsPerPage)
+      }
     }
   }
 
-  async getUserRoles(id: string): Promise<Role[]> {
-    const account = await this.accountRepository.findOne({
-      where: { id },
-      relations: ['roles']
-    })
-    return account.roles
+  async findOne(id: string): Promise<Account> {
+    const qb = this.createQueryBuilder()
+    const account = await qb.where('account.id = :id', { id }).getOne()
+    if (!account) {
+      throw new NotFoundException('Account not found')
+    }
+    return account
+  }
+
+  async create(entity: CreateAccountDto): Promise<Account> {
+    try {
+      return await this.dataSource.transaction(
+        async (transactionalEntityManager) => {
+          const existingAccount = await transactionalEntityManager.findOne(
+            Account,
+            { where: { username: entity.username } }
+          )
+          if (existingAccount) {
+            throw new BadRequestException('Account already exists')
+          }
+
+          const account = transactionalEntityManager.create(Account, entity)
+          account.password = await hash(entity.password, 10)
+          account.originPassword = entity.password
+
+          const [organization, role] = await Promise.all([
+            transactionalEntityManager.findOne(Organization, {
+              where: { type: TypeEnum.COMPANY }
+            }),
+            transactionalEntityManager.findOne(Role, {
+              where: { name: DEFAULT_ROLE_NAME }
+            })
+          ])
+
+          if (!organization || !role) {
+            throw new BadRequestException(
+              'Default organization or role not found'
+            )
+          }
+
+          account.organizations = [organization]
+          account.roles = [role]
+
+          return await transactionalEntityManager.save(Account, account)
+        }
+      )
+    } catch (error) {
+      this.logger.error('Error creating account', error.stack)
+      throw error
+    }
+  }
+
+  async update(id: string, entity: UpdateAccountDto) {
+    const account = await this.findOne(id)
+    const { organizationIds, ...updateFields } = entity
+    updateFields.organizations = []
+
+    if (organizationIds) {
+      const organizations = await this.organizationRepo.findBy({
+        id: In(organizationIds)
+      })
+      if (organizations.length !== organizationIds.length) {
+        throw new BadRequestException('Some organizations not found')
+      }
+      updateFields.organizations = organizations
+    }
+
+    return await this.accountRepository.save({ ...account, ...updateFields })
   }
 
   async getAllowActions(accountId: string): Promise<string[]> {
@@ -155,6 +236,36 @@ export class AccountService extends BaseService<Account> {
     return Array.from(allowedActions)
   }
 
+  // typeorm
+  async findPermissions(account: Account) {
+    const roleIds = account.roles.map((role) => role.id)
+
+    const actions = await this.actionRepository.find({
+      where: {
+        roles: { id: In(roleIds) }
+      }
+    })
+    const menuIds = uniq(actions.map((action) => action.menuId))
+    const paths = await this.menuRepository.find({
+      where: {
+        id: In(menuIds)
+      },
+      select: ['path']
+    })
+
+    const allMenuIds = chain(paths)
+      .flatMap((path) => path.path.split('.'))
+      .uniq()
+      .value()
+    const menus = await this.menuRepository.find({
+      where: {
+        id: In(allMenuIds)
+      },
+      relations: ['parent', 'children']
+    })
+    return { actions, menus }
+  }
+
   async findByUsername(username: string) {
     return await this.accountRepository.findOne({
       where: { username },
@@ -162,95 +273,11 @@ export class AccountService extends BaseService<Account> {
     })
   }
 
-  async createAccount(entity: CreateAccountDto): Promise<Account> {
-    return await this.dataSource.transaction(
-      async (transactionalEntityManager) => {
-        const existingAccount = await transactionalEntityManager.findOne(
-          Account,
-          { where: { username: entity.username } }
-        )
-        if (existingAccount) {
-          throw new BadRequestException('Account already exists')
-        }
-
-        const account = transactionalEntityManager.create(Account, entity)
-
-        const [company, role] = await Promise.all([
-          transactionalEntityManager.findOne(Organization, {
-            where: { type: TypeEnum.COMPANY }
-          }),
-          transactionalEntityManager.findOne(Role, {
-            where: { name: DEFAULT_ROLE_NAME }
-          })
-        ])
-
-        if (!company) {
-          throw new BadRequestException('Default organization not found')
-        }
-        if (!role) {
-          throw new BadRequestException('Default role not found')
-        }
-
-        account.organizations = [company]
-        account.roles = [role]
-
-        return await transactionalEntityManager.save(Account, account)
-      }
-    )
-  }
-
-  // ? 更新账户组织
-  async updateAccount(id: string, entity: UpdateAccountDto) {
-    const account = await this.findOne(id)
-
-    const { organizationIds, ...updateFields } = entity
-
-    // ? 移除未勾选的组织
-    // ? 保存好其他字段
-    updateFields.organizations = []
-    const newAccount = await this.accountRepository.save({
-      ...account,
-      ...updateFields
-    })
-
-    if (organizationIds) {
-      const organizations = await this.organizationRepo.findBy({
-        id: In(organizationIds)
-      })
-
-      if (organizations.length !== organizationIds.length) {
-        throw new BadRequestException('Some organizations not found')
-      }
-
-      newAccount.organizations = organizations
+  async delete(id: string) {
+    const result = await this.accountRepository.delete(id)
+    if (result.affected === 0) {
+      throw new NotFoundException('Account not found')
     }
-    // 保存插入组织的实体
-    return await this.accountRepository.save({ ...newAccount })
-  }
-
-  async findAll(
-    page: number = 1,
-    itemsPerPage: number = 10,
-    filters: Record<string, any> = {}
-  ) {
-    this.logger.debug(filters)
-    const qb = this.createQueryBuilder()
-    this.applyFilters(qb, filters)
-    this.applyCustomizations(qb)
-
-    const totalItems = await qb.getCount()
-    const skip = itemsPerPage > 0 ? (page - 1) * itemsPerPage : 0
-    const take = itemsPerPage > 0 ? itemsPerPage : totalItems
-    const items = await qb.skip(skip).take(take).getMany()
-
-    return {
-      items,
-      meta: {
-        page,
-        itemsPerPage,
-        itemsCount: totalItems,
-        pagesCount: Math.ceil(totalItems / itemsPerPage)
-      }
-    }
+    return result
   }
 }

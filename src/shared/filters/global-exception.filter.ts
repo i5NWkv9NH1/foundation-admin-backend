@@ -3,7 +3,8 @@ import {
   Catch,
   ExceptionFilter,
   HttpException,
-  HttpStatus
+  HttpStatus,
+  Logger
 } from '@nestjs/common'
 import { Request, Response } from 'express'
 import { QueryFailedError } from 'typeorm'
@@ -15,6 +16,7 @@ import { QueryFailedError } from 'typeorm'
 // @Catch(HttpException, QueryFailedError)
 @Catch(HttpException)
 export class GlobalExceptionFilter implements ExceptionFilter {
+  protected logger = new Logger(GlobalExceptionFilter.name)
   /**
    * **catch** method handles exceptions and formats the response based on the exception type.
    *
@@ -37,7 +39,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       typeof exceptionResponse === 'string'
         ? exceptionResponse
         : (exceptionResponse as any).message
-
+    this.logger.error(
+      `HTTP ${status} - ${message} - ${request.method} ${request.url}`
+    )
     // Handle TypeORM exceptions
     if (exception instanceof QueryFailedError) {
       response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({

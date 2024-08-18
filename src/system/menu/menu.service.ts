@@ -32,30 +32,8 @@ export class MenuService extends BaseService<Menu> {
       .leftJoinAndSelect('menu.children', 'children')
       .leftJoinAndSelect('menu.actions', 'actions')
       .leftJoinAndSelect('actions.menu', 'actionMenu')
-    // .createQueryBuilder('menu')
-    // .leftJoinAndSelect('menu.parent', 'parent') // 加载父级菜单
-    // .leftJoinAndSelect('menu.children', 'children') // 加载子菜单
-    // .leftJoinAndSelect('menu.actions', 'actions') // 加载动作
-    // .leftJoinAndSelect('actions.menu', 'actionMenu') // 加载动作的菜单
-    // .addSelect('parent.id') // 确保不递归地加载父级
-    // .addSelect('children.id') // 确保不递归地加载子菜单
-    // .addSelect('actions.id') // 确保不递归地加载动作
-    // .addSelect('actionMenu.id') // 确保不递归地加载动作的菜单
-    //#
-    // .createQueryBuilder('menu')
-    // .leftJoinAndSelect('menu.parent', 'parent')
-    // .leftJoinAndSelect('menu.children', 'children')
-    // .leftJoinAndSelect('menu.actions', 'actions')
-    // .leftJoinAndSelect('actions.menu', 'actionMenu')
-    // .addSelect(['parent.id', 'parent.name']) // 加载父级菜单的基本信息
-    // .addSelect(['children.id', 'children.name']) // 加载子菜单的基本信息
-    // .addSelect([
-    //   'actions.id',
-    //   'actions.name',
-    //   'actionMenu.id',
-    //   'actionMenu.name'
-    // ]) // 加载动作及其菜单信息
   }
+
   protected applyFilters(
     qb: SelectQueryBuilder<Menu>,
     filters: Record<string, any>

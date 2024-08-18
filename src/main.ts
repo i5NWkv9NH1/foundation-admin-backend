@@ -16,8 +16,8 @@ async function bootstrap() {
   // app.useGlobalFilters(new SystemExceptionFilter())
   app.useGlobalPipes(
     new ValidationPipe({
-      transform: true,
-      skipMissingProperties: true
+      transform: true
+      // skipMissingProperties: true
     })
   )
   // TODO: build custom logger implement nest.js and pino

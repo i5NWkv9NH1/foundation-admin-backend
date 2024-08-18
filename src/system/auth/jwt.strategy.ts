@@ -31,16 +31,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Token has been blacklisted')
     }
 
-    // 使用 payload.sub 查询用户信息
-    // ! 根据 payload 的内容决定查询哪个表
-    // let account
-    // if (payload.type === 'admin') {
-    //   // 假设 payload 中有 type 字段来区分
-    //   account = await this.accountService.findOne(payload.sub)
-    // } else {
-    //   account = await this.userService.findOne(payload.sub)
-    // }
-
     const account = await this.accountService.findOne(payload.sub)
 
     if (!account) {

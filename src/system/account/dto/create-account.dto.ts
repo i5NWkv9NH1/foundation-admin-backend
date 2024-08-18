@@ -10,9 +10,9 @@ import { Role } from 'src/system/role/entities/role.entity'
 import { Gender, StatusEnum } from '../entities/account.entity'
 
 export class CreateAccountDto {
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  name: string
+  name?: string
 
   @IsString()
   @IsNotEmpty()
@@ -26,11 +26,13 @@ export class CreateAccountDto {
   @IsString()
   avatarUrl?: string
 
+  @IsOptional()
   @IsEnum(Gender)
-  gender: Gender
+  gender?: Gender
 
+  @IsOptional()
   @IsEnum(StatusEnum)
-  state: StatusEnum
+  state?: StatusEnum
 
   @IsOptional()
   @IsString()
