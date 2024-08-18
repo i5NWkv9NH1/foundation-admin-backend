@@ -215,21 +215,28 @@ export class AccountService {
   }
 
   async getAllowActions({ username }: { username: string }): Promise<string[]> {
-    this.logger.debug(username)
-    const account = await this.findByUsername(username)
+    const account = await this.accountRepository.findOne({
+      where: { username },
+      relations: {
+        roles: {
+          actions: true
+        }
+      }
+    })
 
     if (!account) {
       throw new NotFoundException('Account not found')
     }
 
     const allowedActions = new Set<string>()
-    const testActions = []
     account.roles.forEach((role) => {
       role.actions.forEach((action) => {
         allowedActions.add(action.code)
-        testActions.push(action.code)
       })
     })
+
+    this.logger.debug('Account actions')
+    this.logger.debug(Array.from(allowedActions))
 
     return Array.from(allowedActions)
   }
