@@ -20,7 +20,6 @@ async function bootstrap() {
       skipMissingProperties: true
     })
   )
-  // app.useGlobalPipes(new ValidationPipe())
   // TODO: build custom logger implement nest.js and pino
   // app.useLogger(app.get(Logger))
   app.useGlobalInterceptors(new GlobalInterceptor())

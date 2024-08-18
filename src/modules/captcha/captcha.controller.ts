@@ -2,7 +2,9 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Get,
   HttpStatus,
+  Logger,
   Post,
   Res,
   UseGuards
@@ -10,6 +12,8 @@ import {
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler'
 import { Response } from 'express'
 import { CaptchaService } from './captcha.service'
+import { InjectMeiliSearch } from 'nestjs-meilisearch'
+import { MeiliSearch } from 'meilisearch'
 
 interface GenerateCaptchaPayload {
   uniqueId: string
@@ -17,7 +21,18 @@ interface GenerateCaptchaPayload {
 
 @Controller('captcha')
 export class CaptchaController {
-  constructor(private readonly captchaService: CaptchaService) {}
+  protected logger = new Logger(CaptchaController.name)
+
+  constructor(
+    private readonly captchaService: CaptchaService,
+    @InjectMeiliSearch()
+    private searchService: MeiliSearch
+  ) {}
+
+  @Get()
+  async test() {
+    return this.searchService.getIndexes()
+  }
 
   @Post('generate')
   @UseGuards(ThrottlerGuard)
