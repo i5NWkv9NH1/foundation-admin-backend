@@ -3,7 +3,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config'
 import { JwtModule } from '@nestjs/jwt'
 import { PassportModule } from '@nestjs/passport'
 import { TypeOrmModule } from '@nestjs/typeorm'
-import { CaptchaModule } from 'src/modules/captcha/captcha.module'
+import { CoreModule } from 'src/core/core.module'
+import { CaptchaModule } from 'src/shared/captcha/captcha.module'
 import { AccountService } from '../account/account.service'
 import { Account } from '../account/entities/account.entity'
 import { Action } from '../action/entities/action.entity'
@@ -20,6 +21,7 @@ import { RolesGuard } from './roles.guard'
 @Global()
 @Module({
   imports: [
+    CoreModule,
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
