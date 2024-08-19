@@ -62,7 +62,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         statusCode: status,
         errors: Array.isArray(message) ? message : null,
         meta: {
-          processedBy: 'System API', // Add additional metadata here
+          processedBy: 'Nest.js API', // Add additional metadata here
           version: '1.0'
         },
         timestamp: new Date().toISOString(), // Timestamp of the error occurrence

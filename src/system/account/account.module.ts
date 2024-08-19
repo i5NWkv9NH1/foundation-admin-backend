@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { Action } from 'rxjs/internal/scheduler/Action'
+import { File } from 'src/modules/cloud/file/entities/file.entity'
+import { Folder } from 'src/modules/cloud/folder/entities/folder.entity'
 import { ActionService } from '../action/action.service'
 import { Menu } from '../menu/entities/menu.entity'
 import { Organization } from '../organization/entities/organization.entity'
@@ -15,6 +17,8 @@ import { Account } from './entities/account.entity'
     TypeOrmModule.forFeature([
       Account,
       AccountProfile,
+      File,
+      Folder,
       Action,
       Role,
       Organization,

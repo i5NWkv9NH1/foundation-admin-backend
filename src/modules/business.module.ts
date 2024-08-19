@@ -1,4 +1,7 @@
 import { Module } from '@nestjs/common'
+import { CloudModule } from './cloud/cloud.module'
 
-@Module({})
+@Module({
+  imports: [CloudModule]
+})
 export class BusinessModule {}

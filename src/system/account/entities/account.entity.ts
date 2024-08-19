@@ -1,4 +1,6 @@
 import { BaseEntity } from 'src/common/entities'
+import { File } from 'src/modules/cloud/file/entities/file.entity'
+import { Folder } from 'src/modules/cloud/folder/entities/folder.entity'
 import { Organization } from 'src/system/organization/entities/organization.entity'
 import { Role } from 'src/system/role/entities/role.entity'
 import {
@@ -8,6 +10,7 @@ import {
   JoinColumn,
   JoinTable,
   ManyToMany,
+  OneToMany,
   OneToOne
 } from 'typeorm'
 import { AccountProfile } from './account-profile.entity'
@@ -45,4 +48,16 @@ export class Account extends BaseEntity {
     inverseJoinColumn: { name: 'organizationId' }
   })
   organizations: Organization[]
+
+  @OneToMany(() => Folder, (folder) => folder.account)
+  folders: Folder[]
+
+  @OneToMany(() => File, (file) => file.account)
+  files: File[]
+
+  @ManyToMany(() => Folder, (folder) => folder.sharedAccounts)
+  sharedFolders: Folder[]
+
+  @ManyToMany(() => File, (file) => file.sharedAccounts)
+  sharedFiles: File[]
 }

@@ -1,18 +1,23 @@
 import { RedisModule, RedisService } from '@liaoliaots/nestjs-redis'
 import { Module } from '@nestjs/common'
 import { ConfigModule, ConfigService } from '@nestjs/config'
+import { ServeStaticModule } from '@nestjs/serve-static'
 import { ThrottlerModule } from '@nestjs/throttler'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { MeiliSearchModule } from 'nestjs-meilisearch'
 import { ThrottlerStorageRedisService } from 'nestjs-throttler-storage-redis'
 import { MeiliSearchConfigService } from './services/meilisearch-config.service'
 import { RedisConfigService } from './services/redis-config.service'
+import { ServeStaticConfigService } from './services/serve-static-config.service'
 import { TypeOrmConfigService } from './services/typeorm-config.service'
-
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true
+    }),
+    ServeStaticModule.forRootAsync({
+      imports: [ConfigModule],
+      useClass: ServeStaticConfigService
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
