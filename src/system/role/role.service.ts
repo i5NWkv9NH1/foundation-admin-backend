@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { BaseService } from 'src/shared/providers/base.service'
+import { BaseService } from 'src/common/providers/base.service'
 import { Repository, SelectQueryBuilder } from 'typeorm'
 import { ActionService } from '../action/action.service'
 import { Action } from '../action/entities/action.entity'

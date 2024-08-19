@@ -10,8 +10,8 @@ import {
   Query,
   UseGuards
 } from '@nestjs/common'
-import { Actions, SystemController } from 'src/shared/decorators'
-import { BaseController } from 'src/shared/providers/base.controller'
+import { Actions, SystemController } from 'src/common/decorators'
+import { BaseController } from 'src/common/providers/base.controller'
 import { DeepPartial } from 'typeorm'
 import { Action } from '../action/entities/action.entity'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'

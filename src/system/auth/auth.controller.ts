@@ -1,6 +1,6 @@
 import { Body, Logger, Post, Req, UseGuards } from '@nestjs/common'
 import { Request } from 'express'
-import { Public, SystemController } from 'src/shared/decorators'
+import { Public, SystemController } from 'src/common/decorators'
 import { AuthService } from './auth.service'
 import { LogoutDto } from './dto/logout.dto'
 import { RefreshTokenDto } from './dto/refresh-token.dto'

@@ -1,4 +1,4 @@
-import { BaseEntity } from 'src/shared/entities/base.entity'
+import { BaseEntity } from 'src/common/entities/base.entity'
 import { Action } from 'src/system/action/entities/action.entity'
 import {
   Column,

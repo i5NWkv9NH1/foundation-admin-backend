@@ -1,4 +1,4 @@
-import { BaseEntity } from 'src/shared/entities/base.entity'
+import { BaseEntity } from 'src/common/entities/base.entity'
 import { Menu } from 'src/system/menu/entities/menu.entity'
 import { Role } from 'src/system/role/entities/role.entity'
 import { Column, Entity, JoinColumn, ManyToMany, ManyToOne } from 'typeorm'

@@ -11,7 +11,7 @@ import {
   Query,
   UseGuards
 } from '@nestjs/common'
-import { Actions, SystemController } from 'src/shared/decorators'
+import { Actions, SystemController } from 'src/common/decorators'
 // import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 // import { RolesGuard } from '../auth/roles.guard'
 import { DeleteResult } from 'typeorm'

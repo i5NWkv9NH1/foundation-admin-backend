@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { BaseService } from 'src/shared/providers/base.service'
+import { BaseService } from 'src/common/providers/base.service'
 import { In, Repository, SelectQueryBuilder } from 'typeorm'
 import { Action } from './entities/action.entity'
 
