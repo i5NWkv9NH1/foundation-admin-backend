@@ -8,6 +8,7 @@ export class RedisConfigService {
 
   createRedisOptions(): RedisModuleOptions {
     return {
+      readyLog: true,
       config: {
         host: this.configService.get<string>('REDIS_HOST'),
         port: this.configService.get<number>('REDIS_PORT'),

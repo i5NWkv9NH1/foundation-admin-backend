@@ -1,8 +1,10 @@
-import { RedisModule } from '@liaoliaots/nestjs-redis'
+import { RedisModule, RedisService } from '@liaoliaots/nestjs-redis'
 import { Module } from '@nestjs/common'
-import { ConfigModule } from '@nestjs/config'
+import { ConfigModule, ConfigService } from '@nestjs/config'
+import { ThrottlerModule } from '@nestjs/throttler'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { MeiliSearchModule } from 'nestjs-meilisearch'
+import { ThrottlerStorageRedisService } from 'nestjs-throttler-storage-redis'
 import { MeiliSearchConfigService } from './services/meilisearch-config.service'
 import { RedisConfigService } from './services/redis-config.service'
 import { TypeOrmConfigService } from './services/typeorm-config.service'
@@ -16,6 +18,7 @@ import { TypeOrmConfigService } from './services/typeorm-config.service'
       imports: [ConfigModule],
       useClass: TypeOrmConfigService
     }),
+    // TODO: As a global module which can be inject anywhere service
     RedisModule.forRootAsync({
       imports: [ConfigModule],
       useClass: RedisConfigService
@@ -23,6 +26,22 @@ import { TypeOrmConfigService } from './services/typeorm-config.service'
     MeiliSearchModule.forRootAsync({
       imports: [ConfigModule],
       useClass: MeiliSearchConfigService
+    }),
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService, RedisService],
+      useFactory: (config: ConfigService, redisService: RedisService) => {
+        const redis = redisService.getClient()
+        return {
+          throttlers: [
+            {
+              name: 'default',
+              ttl: config.get('THROTTLE_TTL') || 60,
+              limit: config.get('THROTTLE_LIMIT') || 5
+            }
+          ],
+          storage: new ThrottlerStorageRedisService(redis)
+        }
+      }
     })
   ]
 })
