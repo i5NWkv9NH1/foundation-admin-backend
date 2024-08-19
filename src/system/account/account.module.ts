@@ -7,11 +7,19 @@ import { Organization } from '../organization/entities/organization.entity'
 import { Role } from '../role/entities/role.entity'
 import { AccountController } from './account.controller'
 import { AccountService } from './account.service'
+import { AccountProfile } from './entities/account-profile.entity'
 import { Account } from './entities/account.entity'
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Account, Action, Role, Organization, Menu])
+    TypeOrmModule.forFeature([
+      Account,
+      AccountProfile,
+      Action,
+      Role,
+      Organization,
+      Menu
+    ])
   ],
   controllers: [AccountController],
   providers: [AccountService, ActionService],

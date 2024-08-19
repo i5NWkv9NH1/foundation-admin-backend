@@ -24,6 +24,7 @@ import {
 import { Role } from '../role/entities/role.entity'
 import { CreateAccountDto } from './dto/create-account.dto'
 import { UpdateAccountDto } from './dto/update-account.dto'
+import { AccountProfile } from './entities/account-profile.entity'
 import { Account } from './entities/account.entity'
 
 @Injectable()
@@ -52,9 +53,10 @@ export class AccountService {
       .createQueryBuilder('account')
       .leftJoinAndSelect('account.organizations', 'organization')
       .leftJoinAndSelect('account.roles', 'role')
+      .leftJoinAndSelect('account.profile', 'profile') // 确保联接到 profile
   }
 
-  // *Filters
+  // * Filters
   protected applyFilters(
     qb: SelectQueryBuilder<Account>,
     filters: Record<string, any>
@@ -79,16 +81,16 @@ export class AccountService {
 
         case 'status':
           if (value !== 'ALL') {
-            qb.andWhere('account.status = :status', { status: value })
+            qb.andWhere('profile.status = :status', { status: value })
           }
+          break
+
+        case 'gender':
+          qb.andWhere('profile.gender = :gender', { gender: value })
           break
 
         case 'roleId':
           qb.andWhere('role.id = :roleId', { roleId: value })
-          break
-
-        case 'gender':
-          qb.andWhere('account.gender = :gender', { gender: value })
           break
 
         case 'text':
@@ -97,7 +99,7 @@ export class AccountService {
               qb.orWhere('account.username LIKE :search', {
                 search: `%${value}%`
               })
-                .orWhere('account.address LIKE :search', {
+                .orWhere('profile.address LIKE :search', {
                   search: `%${value}%`
                 })
                 .orWhere('account.name LIKE :search', { search: `%${value}%` })
@@ -165,7 +167,13 @@ export class AccountService {
             throw new BadRequestException('Account already exists')
           }
 
-          const account = transactionalEntityManager.create(Account, entity)
+          const account = transactionalEntityManager.create(Account, {
+            ...entity,
+            profile: transactionalEntityManager.create(
+              AccountProfile,
+              entity.profile
+            )
+          })
           account.password = await hash(entity.password, 10)
           account.originPassword = entity.password
 
@@ -198,7 +206,7 @@ export class AccountService {
 
   async update(id: string, entity: UpdateAccountDto) {
     const account = await this.findOne(id)
-    const { organizationIds, ...updateFields } = entity
+    const { organizationIds, profile, ...updateFields } = entity
     updateFields.organizations = []
 
     if (organizationIds) {
@@ -211,7 +219,14 @@ export class AccountService {
       updateFields.organizations = organizations
     }
 
-    return await this.accountRepository.save({ ...account, ...updateFields })
+    if (profile) {
+      // @ts-ignore
+      account.profile = { ...account.profile, ...profile }
+    }
+
+    Object.assign(account, updateFields)
+
+    return await this.accountRepository.save(account)
   }
 
   async getAllowActions({ username }: { username: string }): Promise<string[]> {
@@ -274,7 +289,7 @@ export class AccountService {
   async findByUsername(username: string) {
     const account = await this.accountRepository.findOne({
       where: { username },
-      relations: ['roles', 'organizations']
+      relations: ['roles', 'organizations', 'profile'] // 确保加载 profile
     })
     if (!account) throw new BadRequestException('Account not found')
     return account

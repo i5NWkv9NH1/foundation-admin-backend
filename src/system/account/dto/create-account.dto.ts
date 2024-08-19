@@ -1,13 +1,15 @@
+import { Type } from 'class-transformer'
 import {
   IsArray,
-  IsEnum,
   IsNotEmpty,
   IsOptional,
-  IsString
+  IsString,
+  ValidateNested
 } from 'class-validator'
 import { Organization } from 'src/system/organization/entities/organization.entity'
 import { Role } from 'src/system/role/entities/role.entity'
-import { Gender, StatusEnum } from '../entities/account.entity'
+import { AccountProfile } from '../entities/account-profile.entity'
+import { CreateProfileDto } from './create-profile.dto'
 
 export class CreateAccountDto {
   @IsOptional()
@@ -23,34 +25,15 @@ export class CreateAccountDto {
   password: string
 
   @IsOptional()
-  @IsString()
-  avatarUrl?: string
-
-  @IsOptional()
-  @IsEnum(Gender)
-  gender?: Gender
-
-  @IsOptional()
-  @IsEnum(StatusEnum)
-  state?: StatusEnum
-
-  @IsOptional()
-  @IsString()
-  phone?: string
-
-  @IsOptional()
-  @IsString()
-  address?: string
-
-  @IsOptional()
-  @IsString()
-  email?: string
-
-  @IsOptional()
   @IsArray()
   roles?: Role[]
 
   @IsOptional()
   @IsArray()
   organizations?: Organization[]
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => AccountProfile)
+  profile?: CreateProfileDto
 }

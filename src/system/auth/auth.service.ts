@@ -69,6 +69,7 @@ export class AuthService {
     await this.validateCaptcha(uniqueId, captcha)
 
     const isExist = await this.accountService.findByUsername(account.username)
+
     if (!isExist || !(await compare(account.password, isExist.password))) {
       throw new BadRequestException('Username or Password incorrect')
     }

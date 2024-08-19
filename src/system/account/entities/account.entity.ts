@@ -1,21 +1,17 @@
-import { BaseEntity } from 'src/common/entities/base.entity'
+import { BaseEntity } from 'src/common/entities'
 import { Organization } from 'src/system/organization/entities/organization.entity'
 import { Role } from 'src/system/role/entities/role.entity'
-import { Column, Entity, Index, JoinTable, ManyToMany } from 'typeorm'
+import {
+  Column,
+  Entity,
+  Index,
+  JoinColumn,
+  JoinTable,
+  ManyToMany,
+  OneToOne
+} from 'typeorm'
+import { AccountProfile } from './account-profile.entity'
 
-export enum AccountRelations {
-  Roles = 'roles',
-  Organizations = 'organizations'
-}
-export enum Gender {
-  MALE = 'MALE',
-  FEMALE = 'FEMALE',
-  PRIVATE = 'PRIVATE'
-}
-export enum StatusEnum {
-  DISABLE = 'DISABLE',
-  ENABLE = 'ENABLE'
-}
 @Entity('sys_account')
 export class Account extends BaseEntity {
   @Column({ nullable: true })
@@ -25,51 +21,28 @@ export class Account extends BaseEntity {
   @Column({ nullable: false, unique: true })
   username: string
 
-  @Column({ nullable: true, name: 'avatarUrl' })
-  avatarUrl: string
-
-  @Column({ type: 'enum', enum: Gender, default: Gender.PRIVATE })
-  gender: Gender
-
-  @Column({
-    type: 'enum',
-    enum: StatusEnum,
-    nullable: false,
-    default: StatusEnum.ENABLE
-  })
-  status: StatusEnum
-
-  @Column({ nullable: true })
-  phone?: string
-
-  @Column({ nullable: true })
-  address?: string
-
-  @Column()
+  @Column({ nullable: false })
   password: string
-
-  @Index()
-  @Column({ nullable: true, unique: true })
-  email?: string
 
   @Column({ select: false, nullable: true })
   originPassword: string | null
 
-  // ? 删除账户后解绑中间表
+  @OneToOne(() => AccountProfile, (profile) => profile.account, {
+    cascade: true,
+    eager: true,
+    nullable: true
+  })
+  @JoinColumn({ name: 'profileId' })
+  profile: AccountProfile
+
   @ManyToMany(() => Role, (role) => role.accounts)
-  // @JoinTable({
-  //   name: 'sys_account_role',
-  //   joinColumn: { name: 'accountId' },
-  //   inverseJoinColumn: { name: 'roleId' }
-  // })
   roles: Role[]
 
-  // TODO
   @ManyToMany(() => Organization, (organization) => organization.accounts)
   @JoinTable({
-    name: 'sys_account_organization', // 中间表名称
-    joinColumn: { name: 'accountId' }, // 当前实体的连接字段
-    inverseJoinColumn: { name: 'organizationId' } // 关联实体的连接字段
+    name: 'sys_account_organization',
+    joinColumn: { name: 'accountId' },
+    inverseJoinColumn: { name: 'organizationId' }
   })
   organizations: Organization[]
 }
