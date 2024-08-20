@@ -8,6 +8,7 @@ import { InjectDataSource, InjectRepository } from '@nestjs/typeorm'
 import { hash } from 'bcrypt'
 import { chain, uniq } from 'lodash'
 import { DEFAULT_ROLE_NAME } from 'src/constants'
+import { FolderService } from 'src/modules/cloud/folder/folder.service'
 import {
   Brackets,
   DataSource,
@@ -36,14 +37,13 @@ export class AccountService {
     private readonly accountRepository: Repository<Account>,
     @InjectRepository(Action)
     private readonly actionRepository: Repository<Action>,
-    @InjectRepository(Role)
-    private readonly roleRepository: Repository<Role>,
     @InjectRepository(Menu)
     private readonly menuRepository: Repository<Menu>,
     @InjectRepository(Organization)
     private readonly organizationRepo: Repository<Organization>,
     @InjectDataSource()
-    private readonly dataSource: DataSource
+    private readonly dataSource: DataSource,
+    private readonly folderService: FolderService
   ) {}
 
   //#region Hooks
@@ -194,6 +194,9 @@ export class AccountService {
 
           account.organizations = [organization]
           account.roles = [role]
+
+          // * folder
+          await this.folderService.createFolder('Default', account.id)
 
           return await transactionalEntityManager.save(Account, account)
         }

@@ -10,7 +10,7 @@ import {
 } from 'typeorm'
 import { Folder } from '../../folder/entities/folder.entity'
 
-@Entity('files')
+@Entity('c_files')
 export class File extends BaseEntity {
   @Column({ nullable: false })
   filename: string
@@ -40,7 +40,7 @@ export class File extends BaseEntity {
 
   @ManyToMany(() => Account, (_) => _.sharedFiles)
   @JoinTable({
-    name: 'file_shared_accounts',
+    name: 'c_file_shared_accounts',
     joinColumn: { name: 'fileId' },
     inverseJoinColumn: { name: 'accountId' }
   })

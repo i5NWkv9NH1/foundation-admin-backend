@@ -12,7 +12,7 @@ import {
 } from 'typeorm'
 import { File } from '../../file/entities/file.entity'
 
-@Entity('folders')
+@Entity('c_folders')
 export class Folder extends BaseEntity {
   @Index()
   @Column({ nullable: false })
@@ -20,6 +20,12 @@ export class Folder extends BaseEntity {
 
   @Column({ nullable: true })
   relativePath: string
+
+  @Column({ nullable: true })
+  thumbnailUrl: string
+
+  @Column({ type: 'text', nullable: true })
+  description: string
 
   @ManyToOne(() => Account, (account) => account.folders)
   @JoinColumn({ name: 'accountId' })
@@ -30,7 +36,7 @@ export class Folder extends BaseEntity {
 
   @ManyToMany(() => Account, (_) => _.sharedFolders)
   @JoinTable({
-    name: 'folder_shared_accounts',
+    name: 'c_folder_shared_accounts',
     joinColumn: { name: 'folderId' },
     inverseJoinColumn: { name: 'accountId' }
   })

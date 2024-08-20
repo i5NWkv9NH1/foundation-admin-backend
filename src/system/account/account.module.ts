@@ -1,9 +1,10 @@
-import { Module } from '@nestjs/common'
+import { forwardRef, Module } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { Action } from 'rxjs/internal/scheduler/Action'
 import { File } from 'src/modules/cloud/file/entities/file.entity'
+import { FileModule } from 'src/modules/cloud/file/file.module'
 import { Folder } from 'src/modules/cloud/folder/entities/folder.entity'
-import { ActionService } from '../action/action.service'
+import { FolderModule } from 'src/modules/cloud/folder/folder.module'
 import { Menu } from '../menu/entities/menu.entity'
 import { Organization } from '../organization/entities/organization.entity'
 import { Role } from '../role/entities/role.entity'
@@ -23,10 +24,12 @@ import { Account } from './entities/account.entity'
       Role,
       Organization,
       Menu
-    ])
+    ]),
+    forwardRef(() => FileModule),
+    forwardRef(() => FolderModule)
   ],
   controllers: [AccountController],
-  providers: [AccountService, ActionService],
+  providers: [AccountService],
   exports: [AccountService]
 })
 export class AccountModule {}

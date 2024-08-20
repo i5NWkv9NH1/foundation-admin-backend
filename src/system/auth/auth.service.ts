@@ -5,11 +5,9 @@ import {
   UnauthorizedException
 } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
-import { InjectRepository } from '@nestjs/typeorm'
 import { compare } from 'bcrypt'
 import { DEFAULT_EXPIRE, REFRESH_EXPIRE } from 'src/constants'
 import { CaptchaService } from 'src/shared/captcha/captcha.service'
-import { Repository } from 'typeorm'
 import { AccountService } from '../account/account.service'
 import { Account } from '../account/entities/account.entity'
 import { BlacklistedTokensService } from './blacklisted-token.service'
@@ -26,9 +24,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly accountService: AccountService,
     private readonly blacklistedTokensService: BlacklistedTokensService,
-    private readonly captchaService: CaptchaService,
-    @InjectRepository(Account)
-    private readonly accountRepository: Repository<Account>
+    private readonly captchaService: CaptchaService
   ) {}
 
   private async validateCaptcha(uniqueId: string, captcha: string) {
@@ -46,8 +42,7 @@ export class AuthService {
 
     await this.validateCaptcha(uniqueId, captcha)
 
-    const account = await this.accountService.create({ ...rest })
-    const savedAccount = await this.accountRepository.save(account)
+    const savedAccount = await this.accountService.create({ ...rest })
     if (!savedAccount) {
       throw new BadRequestException('Account could not be saved')
     }

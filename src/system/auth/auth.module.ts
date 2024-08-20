@@ -1,11 +1,11 @@
-import { Global, Module } from '@nestjs/common'
+import { forwardRef, Global, Module } from '@nestjs/common'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { JwtModule } from '@nestjs/jwt'
 import { PassportModule } from '@nestjs/passport'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { CoreModule } from 'src/core/core.module'
 import { CaptchaModule } from 'src/shared/captcha/captcha.module'
-import { AccountService } from '../account/account.service'
+import { AccountModule } from '../account/account.module'
 import { Account } from '../account/entities/account.entity'
 import { Action } from '../action/entities/action.entity'
 import { Menu } from '../menu/entities/menu.entity'
@@ -32,7 +32,8 @@ import { RolesGuard } from './roles.guard'
       inject: [ConfigService]
     }),
     TypeOrmModule.forFeature([Account, Action, Menu, Role, Organization]),
-    CaptchaModule
+    CaptchaModule,
+    forwardRef(() => AccountModule)
   ],
   controllers: [AuthController],
   providers: [
@@ -40,16 +41,8 @@ import { RolesGuard } from './roles.guard'
     JwtAuthGuard,
     RolesGuard,
     AuthService,
-    AccountService,
     BlacklistedTokensService
   ],
-  exports: [
-    JwtStrategy,
-    JwtAuthGuard,
-    RolesGuard,
-    AuthService,
-    JwtModule,
-    AccountService
-  ]
+  exports: [JwtStrategy, JwtAuthGuard, RolesGuard, AuthService, JwtModule]
 })
 export class AuthModule {}

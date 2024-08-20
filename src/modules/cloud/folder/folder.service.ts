@@ -23,27 +23,27 @@ export class FolderService {
     private readonly fileStorageService: FileStorageService
   ) {}
 
-  async createFolder(name: string, accountId: string): Promise<Folder> {
+  async createFolder(
+    name: string,
+    accountId: string,
+    thumbnailUrl?: string,
+    description?: string
+  ): Promise<Folder> {
     const account = await this.accountService.findOne(accountId)
 
     if (!account) {
       throw new NotFoundException('Account not found')
     }
 
-    // 生成文件夹的相对路径
     const relativePath = this.generateRelativePath(account.username, name)
-
-    // 生成文件夹路径
     const folderPath = this.fileStorageService.getRelativePath(relativePath)
 
-    // 检查文件系统中是否存在同名文件夹
     if (existsSync(folderPath)) {
       throw new BadRequestException(
         'A folder with the same name already exists in the file system'
       )
     }
 
-    // 创建文件夹
     try {
       mkdirSync(folderPath, { recursive: true })
     } catch (error) {
@@ -52,8 +52,14 @@ export class FolderService {
       )
     }
 
-    // 创建数据库中的文件夹记录
-    const folder = this.folderRepository.create({ name, account, relativePath })
+    const folder = this.folderRepository.create({
+      name,
+      account,
+      relativePath,
+      thumbnailUrl, // 存储封面图片URL
+      description // 存储文件夹描述
+    })
+
     return await this.folderRepository.save(folder)
   }
 
@@ -77,7 +83,6 @@ export class FolderService {
       }
     }
 
-    // 删除文件系统中的文件夹
     const folderPath = this.fileStorageService.getRelativePath(
       folder.relativePath
     )
@@ -121,10 +126,7 @@ export class FolderService {
     })
   }
 
-  private generateRelativePath(
-    accountUsername: string,
-    folderName: string
-  ): string {
-    return `${accountUsername}/${folderName}`
+  private generateRelativePath(accountId: string, folderId: string): string {
+    return `${accountId}/${folderId}`
   }
 }

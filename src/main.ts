@@ -1,4 +1,4 @@
-import { ValidationPipe } from '@nestjs/common'
+import { Logger, ValidationPipe } from '@nestjs/common'
 import { NestFactory } from '@nestjs/core'
 import { NestExpressApplication } from '@nestjs/platform-express'
 import { AppModule } from './app.module'
@@ -10,6 +10,7 @@ async function bootstrap() {
     bufferLogs: true,
     snapshot: true
   })
+  app.useLogger(app.get(Logger))
 
   // const configService = app.get(ConfigService)
 
