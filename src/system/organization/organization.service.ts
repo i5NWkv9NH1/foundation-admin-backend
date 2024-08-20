@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm'
 import { BaseService } from 'src/common/providers/base.service'
-import { DataSource, Like, Repository, SelectQueryBuilder } from 'typeorm'
+import { DataSource, In, Like, Repository, SelectQueryBuilder } from 'typeorm'
 import { v4 as uuid } from 'uuid'
 import { Organization } from './entities/organization.entity'
 
@@ -17,6 +17,7 @@ export class OrganizationService extends BaseService<Organization> {
   ) {
     super(organizationRepository)
   }
+  //#region Hooks
   protected createQueryBuilder(): SelectQueryBuilder<Organization> {
     return this.organizationRepository.createQueryBuilder('organization')
   }
@@ -38,6 +39,8 @@ export class OrganizationService extends BaseService<Organization> {
       .leftJoinAndSelect('organization.children', 'children')
       .leftJoinAndSelect('organization.accounts', 'account')
   }
+
+  //#endregion
 
   async findAll(
     page: number = 1,
@@ -63,6 +66,7 @@ export class OrganizationService extends BaseService<Organization> {
       }
     }
   }
+
   // ? overwrite query builder
   async findOne(id: string): Promise<Organization> {
     return await this.organizationRepository.findOne({
@@ -223,5 +227,11 @@ export class OrganizationService extends BaseService<Organization> {
         )
       })
     }
+  }
+
+  async findByIds(ids: string[]) {
+    return await this.organizationRepository.findBy({
+      id: In(ids)
+    })
   }
 }

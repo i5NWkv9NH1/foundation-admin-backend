@@ -11,7 +11,6 @@ import {
   UseGuards
 } from '@nestjs/common'
 import { Actions, SystemController } from 'src/common/decorators'
-import { BaseController } from 'src/common/providers/base.controller'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { RolesGuard } from '../auth/roles.guard'
 import { Menu } from './entities/menu.entity'
@@ -19,10 +18,8 @@ import { MenuService } from './menu.service'
 
 @SystemController('menus')
 @UseGuards(JwtAuthGuard, RolesGuard)
-export class MenuController extends BaseController<Menu> {
-  constructor(private readonly menuService: MenuService) {
-    super(menuService)
-  }
+export class MenuController {
+  constructor(private readonly menuService: MenuService) {}
 
   @Get()
   @Actions('view:sys:menus')

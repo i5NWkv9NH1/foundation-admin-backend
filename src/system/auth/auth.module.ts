@@ -1,16 +1,9 @@
-import { forwardRef, Global, Module } from '@nestjs/common'
+import { Global, Module } from '@nestjs/common'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { JwtModule } from '@nestjs/jwt'
 import { PassportModule } from '@nestjs/passport'
-import { TypeOrmModule } from '@nestjs/typeorm'
-import { CoreModule } from 'src/core/core.module'
 import { CaptchaModule } from 'src/shared/captcha/captcha.module'
 import { AccountModule } from '../account/account.module'
-import { Account } from '../account/entities/account.entity'
-import { Action } from '../action/entities/action.entity'
-import { Menu } from '../menu/entities/menu.entity'
-import { Organization } from '../organization/entities/organization.entity'
-import { Role } from '../role/entities/role.entity'
 import { AuthController } from './auth.controller'
 import { AuthService } from './auth.service'
 import { BlacklistedTokensService } from './blacklisted-token.service'
@@ -21,7 +14,6 @@ import { RolesGuard } from './roles.guard'
 @Global()
 @Module({
   imports: [
-    CoreModule,
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -31,18 +23,27 @@ import { RolesGuard } from './roles.guard'
       }),
       inject: [ConfigService]
     }),
-    TypeOrmModule.forFeature([Account, Action, Menu, Role, Organization]),
     CaptchaModule,
-    forwardRef(() => AccountModule)
+    AccountModule
   ],
   controllers: [AuthController],
   providers: [
+    BlacklistedTokensService,
+    AuthService,
+    JwtStrategy,
+    JwtAuthGuard,
+    RolesGuard
+  ],
+  exports: [
+    BlacklistedTokensService,
+    AuthService,
     JwtStrategy,
     JwtAuthGuard,
     RolesGuard,
-    AuthService,
-    BlacklistedTokensService
-  ],
-  exports: [JwtStrategy, JwtAuthGuard, RolesGuard, AuthService, JwtModule]
+    //
+    AccountModule,
+    JwtModule,
+    PassportModule
+  ]
 })
 export class AuthModule {}

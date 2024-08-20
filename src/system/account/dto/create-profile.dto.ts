@@ -1,5 +1,5 @@
 import { IsEnum, IsOptional, IsString } from 'class-validator'
-import { Gender, StatusEnum } from '../entities/account.type'
+import { Gender, Status } from 'src/common/enums'
 
 export class CreateProfileDto {
   @IsOptional()
@@ -7,8 +7,8 @@ export class CreateProfileDto {
   readonly gender?: Gender
 
   @IsOptional()
-  @IsEnum(StatusEnum)
-  readonly state?: StatusEnum
+  @IsEnum(Status)
+  readonly state?: Status
 
   @IsOptional()
   @IsString()

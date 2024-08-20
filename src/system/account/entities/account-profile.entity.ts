@@ -1,18 +1,11 @@
 import { BaseEntity } from 'src/common/entities/base.entity'
+import { Gender, Status } from 'src/common/enums'
 import { Column, Entity, Index, OneToOne } from 'typeorm'
 import { Account } from './account.entity'
-import { Gender, StatusEnum } from './account.type'
 
 @Entity('sys_account_profile')
 export class AccountProfile extends BaseEntity {
-  // @Column()
-  // accountId: string
-
-  // @OneToOne(() => Account, (_) => _.profile, {
-  //   nullable: false,
-  //   onDelete: 'CASCADE'
-  // })
-  // account: Account
+  //* The account associated with this profile
   @OneToOne(() => Account, (account) => account.profile, {
     nullable: false,
     onDelete: 'CASCADE'
@@ -20,41 +13,52 @@ export class AccountProfile extends BaseEntity {
   account: Account
 
   @Index()
-  @Column({ nullable: true, unique: true })
+  @Column({
+    nullable: true,
+    unique: true,
+    comment: 'The email address of the user'
+  })
   email?: string
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, comment: 'The phone number of the user' })
   phone?: string
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, comment: 'The address of the user' })
   address?: string
 
-  @Column({ type: 'enum', enum: Gender, default: Gender.PRIVATE })
+  @Column({
+    type: 'enum',
+    enum: Gender,
+    nullable: true,
+    default: Gender.PRIVATE,
+    comment: 'The gender of the user'
+  })
   gender: Gender
 
   @Column({
     type: 'enum',
-    enum: StatusEnum,
+    enum: Status,
     nullable: false,
-    default: StatusEnum.ENABLE
+    default: Status.ENABLED,
+    comment: 'The status of the user profile'
   })
-  status: StatusEnum
+  status: Status
 
-  @Column({ nullable: true })
-  avatarUrl: string // 用户头像的URL
+  @Column({ nullable: true, comment: "The URL of the user's avatar" })
+  avatarUrl: string
 
-  @Column({ nullable: true })
-  bannerUrl: string // 用户Banner的URL
+  @Column({ nullable: true, comment: "The URL of the user's banner" })
+  bannerUrl: string
 
-  @Column({ nullable: true })
-  bio: string // 用户的简介或个性签名
+  @Column({ nullable: true, comment: "The user's bio or personal signature" })
+  bio: string
 
-  @Column({ nullable: true })
-  website: string // 用户个人网站的URL
+  @Column({ nullable: true, comment: "The URL of the user's personal website" })
+  website: string
 
-  @Column({ nullable: true })
-  location: string // 用户所在地
+  @Column({ nullable: true, comment: 'The location of the user' })
+  location: string
 
-  @Column('json', { nullable: true })
+  @Column('json', { nullable: true, comment: "The user's social media links" })
   socialMediaLinks: Record<string, string>
 }

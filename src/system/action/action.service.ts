@@ -8,13 +8,13 @@ import { Action } from './entities/action.entity'
 export class ActionService extends BaseService<Action> {
   constructor(
     @InjectRepository(Action)
-    private readonly repo: Repository<Action>
+    private readonly actionRepository: Repository<Action>
   ) {
-    super(repo)
+    super(actionRepository)
   }
 
   protected createQueryBuilder(): SelectQueryBuilder<Action> {
-    return this.repo
+    return this.actionRepository
       .createQueryBuilder('action')
       .leftJoinAndSelect('action.menu', 'menu')
   }
@@ -61,8 +61,18 @@ export class ActionService extends BaseService<Action> {
   }
 
   async findActionsByIds(ids: string[]): Promise<Action[]> {
-    return this.repo.findBy({
+    return this.actionRepository.findBy({
       id: In(ids)
+    })
+  }
+  async findActionsByRuleIds(ids: string[]): Promise<Action[]> {
+    return this.actionRepository.find({
+      where: {
+        roles: {
+          id: In(ids)
+        }
+      },
+      relations: ['roles']
     })
   }
 }

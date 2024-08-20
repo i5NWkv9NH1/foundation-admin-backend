@@ -7,21 +7,13 @@ import {
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm'
 import { hash } from 'bcrypt'
 import { chain, uniq } from 'lodash'
+import { OrganizationType } from 'src/common/enums'
 import { DEFAULT_ROLE_NAME } from 'src/constants'
-import { FolderService } from 'src/modules/cloud/folder/folder.service'
-import {
-  Brackets,
-  DataSource,
-  In,
-  Repository,
-  SelectQueryBuilder
-} from 'typeorm'
-import { Action } from '../action/entities/action.entity'
-import { Menu } from '../menu/entities/menu.entity'
-import {
-  Organization,
-  TypeEnum
-} from '../organization/entities/organization.entity'
+import { Brackets, DataSource, Repository, SelectQueryBuilder } from 'typeorm'
+import { ActionService } from '../action/action.service'
+import { MenuService } from '../menu/menu.service'
+import { Organization } from '../organization/entities/organization.entity'
+import { OrganizationService } from '../organization/organization.service'
 import { Role } from '../role/entities/role.entity'
 import { CreateAccountDto } from './dto/create-account.dto'
 import { UpdateAccountDto } from './dto/update-account.dto'
@@ -35,15 +27,13 @@ export class AccountService {
   constructor(
     @InjectRepository(Account)
     private readonly accountRepository: Repository<Account>,
-    @InjectRepository(Action)
-    private readonly actionRepository: Repository<Action>,
-    @InjectRepository(Menu)
-    private readonly menuRepository: Repository<Menu>,
-    @InjectRepository(Organization)
-    private readonly organizationRepo: Repository<Organization>,
     @InjectDataSource()
     private readonly dataSource: DataSource,
-    private readonly folderService: FolderService
+    // * Inject Service
+    private readonly menuService: MenuService,
+    private readonly actionService: ActionService,
+    private readonly organizationService: OrganizationService
+    // private readonly folderService: FolderService
   ) {}
 
   //#region Hooks
@@ -179,7 +169,7 @@ export class AccountService {
 
           const [organization, role] = await Promise.all([
             transactionalEntityManager.findOne(Organization, {
-              where: { type: TypeEnum.COMPANY }
+              where: { type: OrganizationType.COMPANY }
             }),
             transactionalEntityManager.findOne(Role, {
               where: { name: DEFAULT_ROLE_NAME }
@@ -196,7 +186,7 @@ export class AccountService {
           account.roles = [role]
 
           // * folder
-          await this.folderService.createFolder('Default', account.id)
+          // await this.folderService.createFolder('Default', account.id)
 
           return await transactionalEntityManager.save(Account, account)
         }
@@ -213,9 +203,8 @@ export class AccountService {
     updateFields.organizations = []
 
     if (organizationIds) {
-      const organizations = await this.organizationRepo.findBy({
-        id: In(organizationIds)
-      })
+      const organizations =
+        await this.organizationService.findByIds(organizationIds)
       if (organizations.length !== organizationIds.length) {
         throw new BadRequestException('Some organizations not found')
       }
@@ -235,57 +224,38 @@ export class AccountService {
   async getAllowActions({ username }: { username: string }): Promise<string[]> {
     const account = await this.accountRepository.findOne({
       where: { username },
-      relations: {
-        roles: {
-          actions: true
-        }
-      }
+      relations: ['roles', 'roles.actions'] // 一次性加载角色及其关联的动作
     })
 
     if (!account) {
       throw new NotFoundException('Account not found')
     }
 
-    const allowedActions = new Set<string>()
-    account.roles.forEach((role) => {
-      role.actions.forEach((action) => {
-        allowedActions.add(action.code)
-      })
-    })
+    // 使用 Lodash 来简化和优化动作的提取过程
+    const allowedActions = account.roles.reduce((actions, role) => {
+      role.actions.forEach((action) => actions.add(action.code))
+      return actions
+    }, new Set<string>())
 
-    this.logger.debug('Account actions')
-    this.logger.debug(Array.from(allowedActions))
+    const allowedActionsArray = Array.from(allowedActions)
 
-    return Array.from(allowedActions)
+    this.logger.debug('Account actions:', allowedActionsArray)
+
+    return allowedActionsArray
   }
 
-  // typeorm
   async findPermissions(account: Account) {
     const roleIds = account.roles.map((role) => role.id)
 
-    const actions = await this.actionRepository.find({
-      where: {
-        roles: { id: In(roleIds) }
-      }
-    })
-    const menuIds = uniq(actions.map((action) => action.menuId))
-    const paths = await this.menuRepository.find({
-      where: {
-        id: In(menuIds)
-      },
-      select: ['path']
-    })
+    const actions = await this.actionService.findActionsByRuleIds(roleIds)
 
+    const menuIds = uniq(actions.map((action) => action.menuId))
+    const paths = await this.menuService.findByIdsSelectPath(menuIds)
     const allMenuIds = chain(paths)
       .flatMap((path) => path.path.split('.'))
       .uniq()
       .value()
-    const menus = await this.menuRepository.find({
-      where: {
-        id: In(allMenuIds)
-      },
-      relations: ['parent', 'children']
-    })
+    const menus = await this.menuService.findByIdsAndRelations(allMenuIds)
     return { actions, menus }
   }
 

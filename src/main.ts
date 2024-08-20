@@ -1,4 +1,4 @@
-import { Logger, ValidationPipe } from '@nestjs/common'
+import { ValidationPipe } from '@nestjs/common'
 import { NestFactory } from '@nestjs/core'
 import { NestExpressApplication } from '@nestjs/platform-express'
 import { AppModule } from './app.module'
@@ -10,27 +10,10 @@ async function bootstrap() {
     bufferLogs: true,
     snapshot: true
   })
-  app.useLogger(app.get(Logger))
-
-  // const configService = app.get(ConfigService)
-
-  // // 从配置文件中获取相对路径
-  // const uploadPath = configService.get<string>('UPLOAD_PATH')
-  // const relativePath = configService.get<string>('CLOUD_STORAGE_RELATIVE_PATH')
-  // if (!relativePath) {
-  //   throw new Error(
-  //     'CLOUD_STORAGE_RELATIVE_PATH is not defined in the environment variables'
-  //   )
-  // }
-  // app.useStaticAssets(join(cwd(), uploadPath, relativePath), {
-  //   prefix: 'uploads'
-  // })
 
   app.enableCors({
     origin: true
   })
-  // 需要依赖注入
-  // app.useGlobalFilters(new SystemExceptionFilter())
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true
@@ -38,7 +21,7 @@ async function bootstrap() {
     })
   )
   // TODO: build custom logger implement nest.js and pino
-  // app.useLogger(app.get(Logger))
+  // app.useLogger(app.get(Logger))x
   app.useGlobalInterceptors(new GlobalInterceptor())
   app.useGlobalFilters(new GlobalExceptionFilter())
   app.setGlobalPrefix('api')

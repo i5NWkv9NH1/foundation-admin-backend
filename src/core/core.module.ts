@@ -1,6 +1,7 @@
 import { RedisModule, RedisService } from '@liaoliaots/nestjs-redis'
-import { Module } from '@nestjs/common'
+import { Global, Module } from '@nestjs/common'
 import { ConfigModule, ConfigService } from '@nestjs/config'
+import { EventEmitterModule } from '@nestjs/event-emitter'
 import { ServeStaticModule } from '@nestjs/serve-static'
 import { ThrottlerModule } from '@nestjs/throttler'
 import { TypeOrmModule } from '@nestjs/typeorm'
@@ -10,11 +11,11 @@ import { MeiliSearchConfigService } from './services/meilisearch-config.service'
 import { RedisConfigService } from './services/redis-config.service'
 import { ServeStaticConfigService } from './services/serve-static-config.service'
 import { TypeOrmConfigService } from './services/typeorm-config.service'
+
+@Global()
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true
-    }),
+    ConfigModule.forRoot(),
     ServeStaticModule.forRootAsync({
       imports: [ConfigModule],
       useClass: ServeStaticConfigService
@@ -32,6 +33,7 @@ import { TypeOrmConfigService } from './services/typeorm-config.service'
       imports: [ConfigModule],
       useClass: MeiliSearchConfigService
     }),
+    EventEmitterModule.forRoot({ global: true }),
     ThrottlerModule.forRootAsync({
       inject: [ConfigService, RedisService],
       useFactory: (config: ConfigService, redisService: RedisService) => {
@@ -48,6 +50,7 @@ import { TypeOrmConfigService } from './services/typeorm-config.service'
         }
       }
     })
-  ]
+  ],
+  exports: [ConfigModule, RedisModule, EventEmitterModule]
 })
 export class CoreModule {}

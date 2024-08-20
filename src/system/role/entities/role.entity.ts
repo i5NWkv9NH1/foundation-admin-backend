@@ -1,48 +1,41 @@
 import { BaseEntity } from 'src/common/entities/base.entity'
+import { Status } from 'src/common/enums'
 import { Account } from 'src/system/account/entities/account.entity'
 import { Action } from 'src/system/action/entities/action.entity'
 import { Column, Entity, JoinTable, ManyToMany } from 'typeorm'
 
-export enum RoleRelations {
-  Actions = 'actions'
-}
-export enum StatusEnum {
-  DISABLE = 'DISABLE',
-  ENABLE = 'ENABLE'
-}
-// export enum RoleName {
-//   Root = 'ROOT',
-//   Admin = 'ADMIN',
-//   User = 'USER',
-//   GUEST = 'GUEST'
-// }
-
 @Entity('sys_role')
 export class Role extends BaseEntity {
-  @Column()
+  @Column({ comment: 'The label of the role' })
   label: string
 
-  // @Column({ type: 'enum', enum: RoleName, default: RoleName.User })
-  // name: RoleName
-  @Column({ nullable: false, type: 'varchar', length: 255 })
+  @Column({
+    nullable: false,
+    type: 'varchar',
+    length: 255,
+    comment: 'The name of the role'
+  })
   name: string
 
   @Column({
     type: 'enum',
-    enum: StatusEnum,
-    nullable: false,
-    default: StatusEnum.ENABLE
+    enum: Status,
+    nullable: true,
+    default: Status.ENABLED,
+    comment: 'The status of the role (DISABLE or ENABLE)'
   })
-  status: StatusEnum
+  status: Status
 
   @Column({
     type: 'int',
-    default: 0
+    default: 0,
+    comment: 'Sort order of the role'
   })
   sort: number
 
-  // ? 删除角色后解绑中间表
-  @ManyToMany(() => Account, (_) => _.roles, { cascade: true })
+  // ? Unbind from accounts when the role is deleted
+  //* The accounts associated with this role
+  @ManyToMany(() => Account, (account) => account.roles, { cascade: true })
   @JoinTable({
     name: 'sys_account_role',
     joinColumn: { name: 'roleId' },
@@ -50,7 +43,8 @@ export class Role extends BaseEntity {
   })
   accounts: Account[]
 
-  @ManyToMany(() => Action, (_) => _.roles)
+  //* The actions associated with this role
+  @ManyToMany(() => Action, (action) => action.roles)
   @JoinTable({
     name: 'sys_role_action',
     joinColumn: { name: 'roleId' },
