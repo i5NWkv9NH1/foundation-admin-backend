@@ -9,6 +9,7 @@ import { hash } from 'bcrypt'
 import { chain, uniq } from 'lodash'
 import { OrganizationType } from 'src/common/enums'
 import { DEFAULT_ROLE_NAME } from 'src/constants'
+import { buildTree, buildVueRouter } from 'src/helpers'
 import { Brackets, DataSource, Repository, SelectQueryBuilder } from 'typeorm'
 import { ActionService } from '../action/action.service'
 import { MenuService } from '../menu/menu.service'
@@ -248,15 +249,16 @@ export class AccountService {
     const roleIds = account.roles.map((role) => role.id)
 
     const actions = await this.actionService.findActionsByRuleIds(roleIds)
-
+    // ? Menu -> N Actions
     const menuIds = uniq(actions.map((action) => action.menuId))
     const paths = await this.menuService.findByIdsSelectPath(menuIds)
     const allMenuIds = chain(paths)
       .flatMap((path) => path.path.split('.'))
       .uniq()
       .value()
-    const menus = await this.menuService.findByIdsAndRelations(allMenuIds)
-    return { actions, menus }
+    const menus = await this.menuService.findByIds(allMenuIds)
+    const routes = buildVueRouter(buildTree(menus))
+    return { actions, menus, routes }
   }
 
   async findByUsername(username: string) {

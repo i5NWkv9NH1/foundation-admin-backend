@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm'
+import { buildTree } from 'src/helpers'
 import {
   DataSource,
   FindOptionsWhere,
@@ -25,12 +26,11 @@ export class MenuService {
 
   //#region Hooks
   protected createQueryBuilder(): SelectQueryBuilder<Menu> {
-    return this.menuRepo
-      .createQueryBuilder('menu')
-      .leftJoinAndSelect('menu.parent', 'parent')
-      .leftJoinAndSelect('menu.children', 'children')
-      .leftJoinAndSelect('menu.actions', 'actions')
-      .leftJoinAndSelect('actions.menu', 'actionMenu')
+    return this.menuRepo.createQueryBuilder('menu')
+    // .leftJoinAndSelect('menu.parent', 'parent')
+    // .leftJoinAndSelect('menu.children', 'children')
+    // .leftJoinAndSelect('menu.actions', 'actions')
+    // .leftJoinAndSelect('actions.menu', 'actionMenu')
   }
 
   protected applyFilters(
@@ -66,8 +66,10 @@ export class MenuService {
     const take = itemsPerPage > 0 ? itemsPerPage : totalItems
     const items = await qb.skip(skip).take(take).getMany()
 
+    // this.logger.debug(buildTree(items))
+
     return {
-      items,
+      items: buildTree(items),
       meta: {
         page,
         itemsPerPage,
@@ -81,6 +83,12 @@ export class MenuService {
     return await this.createQueryBuilder()
       .where('menu.id = :id', { id })
       .getOne()
+  }
+
+  async findByIds(ids: string[]) {
+    return await this.createQueryBuilder()
+      .where('menu.id IN (:...ids)', { ids })
+      .getMany()
   }
 
   async create(entity: Menu): Promise<Menu> {
@@ -215,15 +223,6 @@ export class MenuService {
         id: In(ids)
       },
       select: ['path']
-    })
-  }
-
-  async findByIdsAndRelations(ids: string[]) {
-    return await this.menuRepo.find({
-      where: {
-        id: In(ids)
-      },
-      relations: ['parent', 'children']
     })
   }
 }
