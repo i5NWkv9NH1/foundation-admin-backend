@@ -44,13 +44,35 @@ export class Menu extends BaseEntity {
   component: string | null
 
   @Column({ nullable: true, comment: 'Redirect URL for the menu item' })
-  redirect: string | null
+  redirect: string
+
+  @Column({
+    type: 'boolean',
+    nullable: true,
+    comment: 'Show in drawer'
+  })
+  hidden: boolean
+
+  @Column({
+    type: 'boolean',
+    nullable: true,
+    comment: 'Show in tabs'
+  })
+  affix: boolean
+
+  @Column({
+    type: 'boolean',
+    nullable: true,
+    comment: 'Vue Route keepAlive'
+  })
+  keepAlive: boolean
 
   @Column({
     type: 'enum',
     enum: MenuType,
     nullable: true,
-    default: MenuType.CATALOG,
+    default: MenuType.MENU,
+    select: false,
     comment: 'Type of the menu item (e.g., CATALOG, MENU, BUTTON)'
   })
   type: MenuType

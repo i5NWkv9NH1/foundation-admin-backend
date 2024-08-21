@@ -7,8 +7,7 @@ import { Account } from './account.entity'
 export class AccountProfile extends BaseEntity {
   //* The account associated with this profile
   @OneToOne(() => Account, (account) => account.profile, {
-    nullable: false,
-    onDelete: 'CASCADE'
+    nullable: false
   })
   account: Account
 
@@ -50,7 +49,11 @@ export class AccountProfile extends BaseEntity {
   @Column({ nullable: true, comment: "The URL of the user's banner" })
   bannerUrl: string
 
-  @Column({ nullable: true, comment: "The user's bio or personal signature" })
+  @Column({
+    nullable: true,
+    comment: "The user's bio or personal signature",
+    default: 'Type something...'
+  })
   bio: string
 
   @Column({ nullable: true, comment: "The URL of the user's personal website" })

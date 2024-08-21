@@ -35,7 +35,9 @@ export class Role extends BaseEntity {
 
   // ? Unbind from accounts when the role is deleted
   //* The accounts associated with this role
-  @ManyToMany(() => Account, (account) => account.roles, { cascade: true })
+  @ManyToMany(() => Account, (account) => account.roles, {
+    onDelete: 'CASCADE'
+  })
   @JoinTable({
     name: 'sys_account_role',
     joinColumn: { name: 'roleId' },

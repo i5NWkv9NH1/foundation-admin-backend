@@ -48,7 +48,9 @@ export class Account extends BaseEntity {
   profile: AccountProfile
 
   //* Roles associated with the account
-  @ManyToMany(() => Role, (role) => role.accounts)
+  @ManyToMany(() => Role, (role) => role.accounts, {
+    onDelete: 'CASCADE' // 或者在数据库层面设置级联删除
+  })
   roles: Role[]
 
   //* Organizations associated with the account

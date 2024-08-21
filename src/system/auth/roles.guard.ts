@@ -38,8 +38,6 @@ export class RolesGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest()
     const account = request.account
-    this.logger.debug(`Request Context Account`)
-    this.logger.debug(request.account)
 
     if (!account) {
       throw new ForbiddenException('No account ID found in request')

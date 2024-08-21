@@ -30,7 +30,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (await this.blacklistedTokensService.isTokenBlacklisted(token)) {
       throw new UnauthorizedException('Token has been blacklisted')
     }
-    this.logger.debug(payload)
     const account = await this.accountService.findOne(payload.sub)
 
     if (!account) {

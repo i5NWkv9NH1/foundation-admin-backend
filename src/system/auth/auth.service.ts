@@ -72,15 +72,15 @@ export class AuthService {
     const payload = { account: isExist, sub: isExist.id }
     const accessToken = this.generateToken(payload, DEFAULT_EXPIRE)
     const refreshToken = this.generateToken(payload, REFRESH_EXPIRE)
-    const permissions = await this.accountService.findPermissions(isExist)
+    // const permissions = await this.accountService.findPermissions(isExist)
 
     return {
       tokens: {
         accessToken,
         refreshToken
       },
-      account: isExist,
-      permissions
+      account: isExist
+      // permissions
     }
   }
 

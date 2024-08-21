@@ -12,9 +12,9 @@ import { AccountProfile } from '../entities/account-profile.entity'
 import { CreateProfileDto } from './create-profile.dto'
 
 export class CreateAccountDto {
-  @IsOptional()
   @IsString()
-  name?: string
+  @IsNotEmpty()
+  name: string
 
   @IsString()
   @IsNotEmpty()
@@ -30,7 +30,7 @@ export class CreateAccountDto {
 
   @IsOptional()
   @IsArray()
-  organizations?: Organization[]
+  organizations: Organization[]
 
   @IsOptional()
   @ValidateNested()

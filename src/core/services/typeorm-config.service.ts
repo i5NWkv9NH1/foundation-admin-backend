@@ -16,7 +16,7 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
       database: this.configService.get<string>('POSTGRES_DB'),
       autoLoadEntities: true,
       // migrations: ['src/migrations/*{.ts,.js}'],
-      logging: 'all',
+      // logging: 'all',
       synchronize: true,
       // migrationsRun: true,
       // @ts-ignore

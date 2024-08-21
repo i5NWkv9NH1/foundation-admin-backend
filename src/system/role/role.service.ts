@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { BaseService } from 'src/common/providers/base.service'
 import { Repository, SelectQueryBuilder } from 'typeorm'
+import { ActionService } from '../action/action.service'
 import { Action } from '../action/entities/action.entity'
 import { Role } from './entities/role.entity'
 
@@ -10,7 +11,8 @@ export class RoleService extends BaseService<Role> {
   protected readonly logger = new Logger(RoleService.name)
   constructor(
     @InjectRepository(Role)
-    private readonly roleRepo: Repository<Role>
+    private readonly roleRepo: Repository<Role>,
+    private readonly actionSerivce: ActionService
   ) {
     super(roleRepo)
   }
@@ -73,19 +75,21 @@ export class RoleService extends BaseService<Role> {
       meta: {
         page,
         itemsPerPage,
-        itemsCount: totalItems,
-        pagesCount: Math.ceil(totalItems / itemsPerPage)
+        itemsLength: totalItems,
+        pagesLength: Math.ceil(totalItems / itemsPerPage)
       }
     }
   }
 
   async findOne(id: string): Promise<Role> {
     const qb = this.roleRepo.createQueryBuilder('role')
-    return qb
-      .leftJoinAndSelect('role.accounts', 'account')
-      .leftJoinAndSelect('role.actions', 'action')
-      .where('role.id =:id', { id })
-      .getOne()
+    return (
+      qb
+        // .leftJoinAndSelect('role.accounts', 'account')
+        .leftJoinAndSelect('role.actions', 'action')
+        .where('role.id =:id', { id })
+        .getOne()
+    )
   }
 
   async findActionsByRoleId(roleId: string): Promise<Action[]> {
@@ -102,7 +106,7 @@ export class RoleService extends BaseService<Role> {
   async updateRoleActionsByRoleIdMenuId(
     roleId: string,
     menuId: string,
-    actions: Action[]
+    actionIds: string[]
   ) {
     // 获取当前角色
     const role = await this.roleRepo.findOne({
@@ -113,6 +117,8 @@ export class RoleService extends BaseService<Role> {
     if (!role) {
       throw new BadRequestException('Role not found')
     }
+
+    const actions = await this.actionSerivce.findActionsByIds(actionIds)
 
     // 过滤掉与该菜单不相关的 action
     const actionsForMenu = actions.filter((action) => action.menuId === menuId)
@@ -172,8 +178,8 @@ export class RoleService extends BaseService<Role> {
       meta: {
         page,
         itemsPerPage,
-        itemsCount: totalItems,
-        pagesCount: Math.ceil(totalItems / itemsPerPage)
+        itemsLength: totalItems,
+        pagesLength: Math.ceil(totalItems / itemsPerPage)
       }
     }
   }

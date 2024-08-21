@@ -54,8 +54,8 @@ export class ActionService extends BaseService<Action> {
       meta: {
         page,
         itemsPerPage,
-        itemsCount: totalItems,
-        pagesCount: Math.ceil(totalItems / itemsPerPage)
+        itemsLength: totalItems,
+        pagesLength: Math.ceil(totalItems / itemsPerPage)
       }
     }
   }
@@ -65,7 +65,7 @@ export class ActionService extends BaseService<Action> {
       id: In(ids)
     })
   }
-  async findActionsByRuleIds(ids: string[]): Promise<Action[]> {
+  async findActionsByRoleIds(ids: string[]): Promise<Action[]> {
     return this.actionRepository.find({
       where: {
         roles: {
@@ -73,6 +73,13 @@ export class ActionService extends BaseService<Action> {
         }
       },
       relations: ['roles']
+    })
+  }
+
+  async findActionsByMenuId(actionIds: string[], menuId: string) {
+    return this.actionRepository.findBy({
+      id: In(actionIds),
+      menuId
     })
   }
 }

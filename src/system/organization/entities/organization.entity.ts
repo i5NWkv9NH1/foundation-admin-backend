@@ -24,7 +24,8 @@ export class Organization extends BaseEntity {
     type: 'enum',
     enum: OrganizationType,
     default: OrganizationType.GROUP,
-    comment: 'Type of the organization (e.g., GROUP, DEPARTMENT, COMPANY)'
+    comment: 'Type of the organization (e.g., GROUP, DEPARTMENT, COMPANY)',
+    select: false
   })
   type: OrganizationType
 
@@ -44,7 +45,7 @@ export class Organization extends BaseEntity {
   })
   sort: number
 
-  @Column({ comment: 'Icon representing the organization' })
+  @Column({ nullable: true, comment: 'Icon representing the organization' })
   icon: string
 
   @Column({

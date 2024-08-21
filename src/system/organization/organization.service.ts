@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm'
 import { BaseService } from 'src/common/providers/base.service'
+import { buildTree } from 'src/helpers'
 import { DataSource, In, Like, Repository, SelectQueryBuilder } from 'typeorm'
 import { v4 as uuid } from 'uuid'
 import { Organization } from './entities/organization.entity'
@@ -19,7 +20,10 @@ export class OrganizationService extends BaseService<Organization> {
   }
   //#region Hooks
   protected createQueryBuilder(): SelectQueryBuilder<Organization> {
-    return this.organizationRepository.createQueryBuilder('organization')
+    return this.organizationRepository
+      .createQueryBuilder('organization')
+      .leftJoinAndSelect('organization.parent', 'parent')
+      .leftJoinAndSelect('organization.children', 'children')
   }
   protected applyFilters(
     qb: SelectQueryBuilder<Organization>,
@@ -31,13 +35,8 @@ export class OrganizationService extends BaseService<Organization> {
     })
   }
 
-  protected applyCustomizations(
-    qb: SelectQueryBuilder<Organization>
-  ): SelectQueryBuilder<Organization> {
-    return qb
-      .leftJoinAndSelect('organization.parent', 'parent')
-      .leftJoinAndSelect('organization.children', 'children')
-      .leftJoinAndSelect('organization.accounts', 'account')
+  protected applyCustomizations(qb: SelectQueryBuilder<Organization>): void {
+    qb.orderBy('organization.sort', 'ASC')
   }
 
   //#endregion
@@ -57,12 +56,12 @@ export class OrganizationService extends BaseService<Organization> {
     const items = await qb.skip(skip).take(take).getMany()
 
     return {
-      items,
+      items: buildTree(items),
       meta: {
         page,
         itemsPerPage,
-        itemsCount: totalItems,
-        pagesCount: Math.ceil(totalItems / itemsPerPage)
+        itemsLength: totalItems,
+        pagesLength: Math.ceil(totalItems / itemsPerPage)
       }
     }
   }
@@ -86,13 +85,13 @@ export class OrganizationService extends BaseService<Organization> {
         // 查找父级组织
         const parent = entity.parentId
           ? await transactionalEntityManager.findOne(Organization, {
-              where: { id: entity.parentId }
+              where: { id: entity.parentId },
+              relations: ['children']
             })
           : null
 
         // 设置组织路径
         entity.path = parent ? `${parent.path}.${entity.id}` : `${entity.id}`
-        this.logger.debug('path', entity.path)
 
         // 保存组织实体
         const savedOrg = await transactionalEntityManager.save(

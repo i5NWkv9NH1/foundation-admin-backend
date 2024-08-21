@@ -4,47 +4,47 @@ import { Gender, Status } from 'src/common/enums'
 export class CreateProfileDto {
   @IsOptional()
   @IsEnum(Gender)
-  readonly gender?: Gender
+  gender?: Gender
 
   @IsOptional()
   @IsEnum(Status)
-  readonly state?: Status
+  state?: Status
 
   @IsOptional()
   @IsString()
-  readonly phone?: string
+  phone?: string
 
   @IsOptional()
   @IsString()
-  readonly address?: string
+  address?: string
 
   @IsOptional()
   @IsString()
-  readonly email?: string
+  email?: string
 
   @IsOptional()
   @IsString()
-  readonly avatarUrl?: string
+  avatarUrl?: string
 
   @IsOptional()
   @IsString()
-  readonly bannerUrl?: string
+  bannerUrl?: string
 
   @IsOptional()
   @IsString()
-  readonly bio?: string
+  bio?: string
 
   @IsOptional()
   @IsString()
-  readonly website?: string
+  website?: string
 
   @IsOptional()
   @IsString()
-  readonly location?: string
+  location?: string
 
   @IsOptional()
   @IsString({ each: true })
-  readonly socialMediaLinks?: Record<string, string> // JSON 字段
+  socialMediaLinks?: Record<string, string> // JSON 字段
 }
 
 export class UpdateProfileDto extends CreateProfileDto {}

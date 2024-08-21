@@ -46,7 +46,7 @@ export class AccountController {
 
   @Get(':id')
   @Actions('view:sys:accounts')
-  async findOne(id: string): Promise<Account> {
+  async findOne(@Param('id') id: string): Promise<Account> {
     return await this.accountService.findOne(id)
   }
 
@@ -67,7 +67,7 @@ export class AccountController {
 
   @Delete(':id')
   @Actions('delete:sys:accounts')
-  async delete(id: string): Promise<DeleteResult> {
+  async delete(@Param('id') id: string): Promise<DeleteResult> {
     return await this.accountService.delete(id)
   }
 }

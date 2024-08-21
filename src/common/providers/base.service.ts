@@ -44,8 +44,8 @@ export abstract class BaseService<T extends BaseEntity> {
       meta: {
         page,
         itemsPerPage,
-        itemsCount: totalItems,
-        pagesCount: Math.ceil(totalItems / itemsPerPage)
+        itemsLength: totalItems,
+        pagesLength: Math.ceil(totalItems / itemsPerPage)
       }
     }
   }

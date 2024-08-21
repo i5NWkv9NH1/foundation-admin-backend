@@ -131,8 +131,8 @@ export class AccountService {
       meta: {
         page,
         itemsPerPage,
-        itemsCount: totalItems,
-        pagesCount: Math.ceil(totalItems / itemsPerPage)
+        itemsLength: totalItems,
+        pagesLength: Math.ceil(totalItems / itemsPerPage)
       }
     }
   }
@@ -183,25 +183,26 @@ export class AccountService {
             )
           }
 
-          account.organizations = [organization]
-          account.roles = [role]
+          if (!entity.organizations || !!!entity.organizations.length) {
+            account.organizations = [organization]
+          }
 
-          // * folder
-          // await this.folderService.createFolder('Default', account.id)
+          if (!!!entity.roles.length) {
+            account.roles = [role]
+          }
 
           return await transactionalEntityManager.save(Account, account)
         }
       )
     } catch (error) {
       this.logger.error('Error creating account', error.stack)
-      throw error
+      throw new BadRequestException(error)
     }
   }
 
   async update(id: string, entity: UpdateAccountDto) {
     const account = await this.findOne(id)
     const { organizationIds, profile, ...updateFields } = entity
-    updateFields.organizations = []
 
     if (organizationIds) {
       const organizations =
@@ -209,17 +210,17 @@ export class AccountService {
       if (organizations.length !== organizationIds.length) {
         throw new BadRequestException('Some organizations not found')
       }
-      updateFields.organizations = organizations
+      account.organizations = organizations
     }
 
-    if (profile) {
-      // @ts-ignore
-      account.profile = { ...account.profile, ...profile }
-    }
+    delete updateFields.organizations
 
-    Object.assign(account, updateFields)
+    account.profile = { ...account.profile, ...profile }
 
-    return await this.accountRepository.save(account)
+    return await this.accountRepository.save({
+      ...account,
+      ...updateFields
+    })
   }
 
   async getAllowActions({ username }: { username: string }): Promise<string[]> {
@@ -240,15 +241,13 @@ export class AccountService {
 
     const allowedActionsArray = Array.from(allowedActions)
 
-    this.logger.debug('Account actions:', allowedActionsArray)
-
     return allowedActionsArray
   }
 
   async findPermissions(account: Account) {
     const roleIds = account.roles.map((role) => role.id)
 
-    const actions = await this.actionService.findActionsByRuleIds(roleIds)
+    const actions = await this.actionService.findActionsByRoleIds(roleIds)
     // ? Menu -> N Actions
     const menuIds = uniq(actions.map((action) => action.menuId))
     const paths = await this.menuService.findByIdsSelectPath(menuIds)

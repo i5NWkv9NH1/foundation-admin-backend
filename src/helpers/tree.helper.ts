@@ -28,17 +28,14 @@ export function buildTree<T extends BaseEntity & { parentId: string }>(
 }
 
 export function buildVueRouter<T extends BaseEntity>(treeData: T[]) {
-  function transformNode(node, parentPath: string = '') {
+  function transformNode(node) {
     const isRoot = !node.parentId // 判断是否为一级菜单
 
-    const parentComponentPath = isRoot
-      ? `${parentPath}`
-      : `${parentPath.replace(/\//, '')}`
-
     const routeConfig = {
+      ...node,
       path: node.router,
       name: node.name,
-      component: `@/pages/${isRoot ? node.component : `${parentComponentPath}/${node.component}`}.vue`,
+      component: node.component,
       meta: {
         id: node.id,
         icon: node.icon,
@@ -47,7 +44,7 @@ export function buildVueRouter<T extends BaseEntity>(treeData: T[]) {
         sort: node.sort
       },
       children: node.children
-        ? node.children.map((child) => transformNode(child, node.router))
+        ? node.children.map((child) => transformNode(child))
         : [],
       redirect: null
     }

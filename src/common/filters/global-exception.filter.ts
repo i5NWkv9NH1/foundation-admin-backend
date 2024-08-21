@@ -42,32 +42,17 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     this.logger.error(
       `HTTP ${status} - ${message} - ${request.method} ${request.url}`
     )
-    // Handle TypeORM exceptions
-    if (exception instanceof QueryFailedError) {
-      response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-        message: 'Database error',
-        errors: {
-          message: exception.message,
-          detail: exception.query // Providing additional details about the query
-        },
-        timestamp: new Date().toISOString(), // Timestamp of the error occurrence
-        path: request.url // URL of the request that caused the error
-      })
-    } else {
-      // Handle other HTTP exceptions
-      response.status(status).json({
-        success: false,
-        message: Array.isArray(message) ? message.join(', ') : message,
-        statusCode: status,
-        errors: Array.isArray(message) ? message : null,
-        meta: {
-          processedBy: 'Nest.js API', // Add additional metadata here
-          version: '1.0'
-        },
-        timestamp: new Date().toISOString(), // Timestamp of the error occurrence
-        path: request.url // URL of the request that caused the error
-      })
-    }
+    response.status(status).json({
+      success: false,
+      message: Array.isArray(message) ? message.join(', ') : message,
+      statusCode: status,
+      errors: Array.isArray(message) ? message : null,
+      meta: {
+        processedBy: 'Nest.js API', // Add additional metadata here
+        version: '1.0'
+      },
+      timestamp: new Date().toISOString(), // Timestamp of the error occurrence
+      path: request.url // URL of the request that caused the error
+    })
   }
 }

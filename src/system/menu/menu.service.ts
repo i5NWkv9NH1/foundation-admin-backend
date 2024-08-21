@@ -26,10 +26,11 @@ export class MenuService {
 
   //#region Hooks
   protected createQueryBuilder(): SelectQueryBuilder<Menu> {
-    return this.menuRepo.createQueryBuilder('menu')
-    // .leftJoinAndSelect('menu.parent', 'parent')
-    // .leftJoinAndSelect('menu.children', 'children')
-    // .leftJoinAndSelect('menu.actions', 'actions')
+    return this.menuRepo
+      .createQueryBuilder('menu')
+      .leftJoinAndSelect('menu.parent', 'parent')
+      .leftJoinAndSelect('menu.children', 'children')
+      .leftJoinAndSelect('menu.actions', 'actions')
     // .leftJoinAndSelect('actions.menu', 'actionMenu')
   }
 
@@ -73,8 +74,8 @@ export class MenuService {
       meta: {
         page,
         itemsPerPage,
-        itemsCount: totalItems,
-        pagesCount: Math.ceil(totalItems / itemsPerPage)
+        itemsLength: totalItems,
+        pagesLength: Math.ceil(totalItems / itemsPerPage)
       }
     }
   }
@@ -100,18 +101,20 @@ export class MenuService {
 
         const parent = entity.parentId
           ? await transactionalEntityManager.findOne(Menu, {
-              where: { id: entity.parentId }
+              where: { id: entity.parentId },
+              // ! Should be joinin
+              relations: ['children']
             })
           : null
 
         entity.path = parent ? `${parent.path}.${entity.id}` : `${entity.id}`
-        this.logger.debug('path', entity.path)
 
         const savedMenu = await transactionalEntityManager.save(Menu, entity)
 
         if (parent) {
           parent.children = parent.children || []
           parent.children.push(savedMenu)
+          // entity.parent = parent
 
           await transactionalEntityManager.save(Menu, parent)
         }
