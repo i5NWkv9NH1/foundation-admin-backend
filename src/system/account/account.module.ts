@@ -1,20 +1,22 @@
 import { Module } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
-import { Action } from 'rxjs/internal/scheduler/Action'
-import { ActionService } from '../action/action.service'
-import { Menu } from '../menu/entities/menu.entity'
-import { Organization } from '../organization/entities/organization.entity'
-import { Role } from '../role/entities/role.entity'
+import { ActionModule } from '../action/action.module'
+import { MenuModule } from '../menu/menu.module'
+import { OrganizationModule } from '../organization/organization.module'
 import { AccountController } from './account.controller'
 import { AccountService } from './account.service'
+import { AccountProfile } from './entities/account-profile.entity'
 import { Account } from './entities/account.entity'
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Account, Action, Role, Organization, Menu])
+    TypeOrmModule.forFeature([Account, AccountProfile]),
+    ActionModule,
+    OrganizationModule,
+    MenuModule
   ],
   controllers: [AccountController],
-  providers: [AccountService, ActionService],
+  providers: [AccountService],
   exports: [AccountService]
 })
 export class AccountModule {}

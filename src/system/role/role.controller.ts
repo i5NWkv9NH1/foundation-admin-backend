@@ -10,10 +10,9 @@ import {
   Query,
   UseGuards
 } from '@nestjs/common'
-import { Actions, SystemController } from 'src/shared/decorators'
-import { BaseController } from 'src/shared/providers/base.controller'
+import { Actions, SystemController } from 'src/common/decorators'
+import { BaseController } from 'src/common/providers/base.controller'
 import { DeepPartial } from 'typeorm'
-import { Action } from '../action/entities/action.entity'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { RolesGuard } from '../auth/roles.guard'
 import { Role } from './entities/role.entity'
@@ -65,8 +64,9 @@ export class RoleController extends BaseController<Role> {
     return await super.delete(id)
   }
 
+  // TODO: move to actions
   @Get(':roleId/menus/:menuId')
-  @Actions('view:sys:menus')
+  @Actions('view:sys:actions')
   async findActionsByRoleIdMenuId(
     @Param('roleId') roleId: string,
     @Param('menuId') menuId: string,
@@ -82,18 +82,19 @@ export class RoleController extends BaseController<Role> {
     )
   }
 
+  // TODO: move to actions
   @Put(':roleId/menus/:menuId')
-  @Actions('update:sys:menus')
+  @Actions('update:sys:actions')
   async updateRoleActionsByRoleIdMenuId(
     @Param('roleId') roleId: string,
     @Param('menuId') menuId: string,
-    @Body() data: { actions: Action[] }
+    @Body() body: { actionIds: string[] }
   ) {
-    const { actions } = data
+    const { actionIds } = body
     return await this.roleService.updateRoleActionsByRoleIdMenuId(
       roleId,
       menuId,
-      actions
+      actionIds
     )
   }
 }

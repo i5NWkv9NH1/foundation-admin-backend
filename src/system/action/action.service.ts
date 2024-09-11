@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { BaseService } from 'src/shared/providers/base.service'
+import { BaseService } from 'src/common/providers/base.service'
 import { In, Repository, SelectQueryBuilder } from 'typeorm'
 import { Action } from './entities/action.entity'
 
@@ -8,13 +8,13 @@ import { Action } from './entities/action.entity'
 export class ActionService extends BaseService<Action> {
   constructor(
     @InjectRepository(Action)
-    private readonly repo: Repository<Action>
+    private readonly actionRepository: Repository<Action>
   ) {
-    super(repo)
+    super(actionRepository)
   }
 
   protected createQueryBuilder(): SelectQueryBuilder<Action> {
-    return this.repo
+    return this.actionRepository
       .createQueryBuilder('action')
       .leftJoinAndSelect('action.menu', 'menu')
   }
@@ -54,15 +54,32 @@ export class ActionService extends BaseService<Action> {
       meta: {
         page,
         itemsPerPage,
-        itemsCount: totalItems,
-        pagesCount: Math.ceil(totalItems / itemsPerPage)
+        itemsLength: totalItems,
+        pagesLength: Math.ceil(totalItems / itemsPerPage)
       }
     }
   }
 
   async findActionsByIds(ids: string[]): Promise<Action[]> {
-    return this.repo.findBy({
+    return this.actionRepository.findBy({
       id: In(ids)
+    })
+  }
+  async findActionsByRoleIds(ids: string[]): Promise<Action[]> {
+    return this.actionRepository.find({
+      where: {
+        roles: {
+          id: In(ids)
+        }
+      },
+      relations: ['roles']
+    })
+  }
+
+  async findActionsByMenuId(actionIds: string[], menuId: string) {
+    return this.actionRepository.findBy({
+      id: In(actionIds),
+      menuId
     })
   }
 }

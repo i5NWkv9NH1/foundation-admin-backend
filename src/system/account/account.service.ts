@@ -5,222 +5,275 @@ import {
   NotFoundException
 } from '@nestjs/common'
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm'
+import { hash } from 'bcrypt'
+import { chain, uniq } from 'lodash'
+import { OrganizationType } from 'src/common/enums'
 import { DEFAULT_ROLE_NAME } from 'src/constants'
-import { BaseService } from 'src/shared/providers/base.service'
-import {
-  Brackets,
-  DataSource,
-  In,
-  Repository,
-  SelectQueryBuilder
-} from 'typeorm'
-import { Action } from '../action/entities/action.entity'
-import {
-  Organization,
-  TypeEnum
-} from '../organization/entities/organization.entity'
+import { buildTree, buildVueRouter } from 'src/helpers'
+import { Brackets, DataSource, Repository, SelectQueryBuilder } from 'typeorm'
+import { ActionService } from '../action/action.service'
+import { MenuService } from '../menu/menu.service'
+import { Organization } from '../organization/entities/organization.entity'
+import { OrganizationService } from '../organization/organization.service'
 import { Role } from '../role/entities/role.entity'
 import { CreateAccountDto } from './dto/create-account.dto'
 import { UpdateAccountDto } from './dto/update-account.dto'
+import { AccountProfile } from './entities/account-profile.entity'
 import { Account } from './entities/account.entity'
 
 @Injectable()
-export class AccountService extends BaseService<Account> {
+export class AccountService {
   protected logger: Logger = new Logger(AccountService.name)
+
   constructor(
     @InjectRepository(Account)
     private readonly accountRepository: Repository<Account>,
-    @InjectRepository(Action)
-    private readonly actionRepository: Repository<Action>,
-    @InjectRepository(Role)
-    private readonly roleRepository: Repository<Role>,
-    @InjectRepository(Organization)
-    private readonly organizationRepo: Repository<Organization>,
     @InjectDataSource()
-    private readonly dataSource: DataSource
-  ) {
-    super(accountRepository)
-  }
+    private readonly dataSource: DataSource,
+    // * Inject Service
+    private readonly menuService: MenuService,
+    private readonly actionService: ActionService,
+    private readonly organizationService: OrganizationService
+    // private readonly folderService: FolderService
+  ) {}
 
+  //#region Hooks
+  // * QueryBuilder
   protected createQueryBuilder(): SelectQueryBuilder<Account> {
     return this.accountRepository
       .createQueryBuilder('account')
       .leftJoinAndSelect('account.organizations', 'organization')
       .leftJoinAndSelect('account.roles', 'role')
+      .leftJoinAndSelect('account.profile', 'profile') // 确保联接到 profile
   }
 
+  // * Filters
   protected applyFilters(
     qb: SelectQueryBuilder<Account>,
     filters: Record<string, any>
   ): void {
-    Object.keys(filters).forEach((key) => {
-      const value = filters[key]
-      if (value) {
-        if (key === 'organizationId') {
+    Object.entries(filters).forEach(([key, value]) => {
+      if (!value) return
+
+      switch (key) {
+        case 'organizationId':
           qb.andWhere('organization.id = :organizationId', {
             organizationId: value
           })
-        } else if (key === 'startDate' || key === 'endDate') {
-          if (key === 'startDate') {
-            qb.andWhere('account.createdAt >= :startDate', { startDate: value })
-          } else if (key === 'endDate') {
-            qb.andWhere('account.createdAt <= :endDate', { endDate: value })
-          }
-        } else if (key === 'status') {
+          break
+
+        case 'startDate':
+          qb.andWhere('account.createdAt >= :startDate', { startDate: value })
+          break
+
+        case 'endDate':
+          qb.andWhere('account.createdAt <= :endDate', { endDate: value })
+          break
+
+        case 'status':
           if (value !== 'ALL') {
-            qb.andWhere('account.status = :status', { status: value })
+            qb.andWhere('profile.status = :status', { status: value })
           }
-        } else if (key === 'roleId') {
-          qb.andWhere('role.id = :roleId', {
-            roleId: value
-          })
-        } else if (key === 'gender') {
-          qb.andWhere('account.gender =:gender', { gender: value })
-        } else if (key === 'text') {
+          break
+
+        case 'gender':
+          qb.andWhere('profile.gender = :gender', { gender: value })
+          break
+
+        case 'roleId':
+          qb.andWhere('role.id = :roleId', { roleId: value })
+          break
+
+        case 'text':
           qb.andWhere(
             new Brackets((qb) => {
               qb.orWhere('account.username LIKE :search', {
                 search: `%${value}%`
               })
-                .orWhere('account.address LIKE :search', {
+                .orWhere('profile.address LIKE :search', {
                   search: `%${value}%`
                 })
                 .orWhere('account.name LIKE :search', { search: `%${value}%` })
             })
           )
-        } else {
+          break
+
+        default:
           qb.andWhere(`account.${key} LIKE :${key}`, { [key]: `%${value}%` })
-        }
+          break
       }
     })
   }
 
+  // * Hooks after filters
   protected applyCustomizations(qb: SelectQueryBuilder<Account>): void {
-    qb
-      //
-      .andWhere(`role.name != :name`, { name: 'ROOT' })
-      //
-      .orderBy('account.createdAt', 'ASC')
+    qb.orderBy('account.createdAt', 'ASC')
   }
 
-  async findOne(id: string): Promise<Account> {
-    try {
-      const qb = this.createQueryBuilder()
-      return (
-        qb
-          .where('account.createdAt IS NOT NULL')
-          .andWhere('account.id = :id', { id })
-          // ? already join in first hooks
-          // .leftJoinAndSelect('account.organizations', 'organization')
-          // .leftJoinAndSelect('account.roles', 'role')
-          .orderBy('account.createdAt', 'DESC')
-          .getOne()
-      )
-    } catch (error) {
-      throw new BadRequestException('Account not found')
+  //#endregion
+
+  async findAll(
+    page: number = 1,
+    itemsPerPage: number = 10,
+    filters: Record<string, any> = {}
+  ) {
+    const qb = this.createQueryBuilder()
+    this.applyFilters(qb, filters)
+    this.applyCustomizations(qb)
+
+    const totalItems = await qb.getCount()
+    const skip = itemsPerPage > 0 ? (page - 1) * itemsPerPage : 0
+    const take = itemsPerPage > 0 ? itemsPerPage : totalItems
+    const items = await qb.skip(skip).take(take).getMany()
+
+    return {
+      items,
+      meta: {
+        page,
+        itemsPerPage,
+        itemsLength: totalItems,
+        pagesLength: Math.ceil(totalItems / itemsPerPage)
+      }
     }
   }
 
-  async getUserRoles(id: string): Promise<Role[]> {
-    const account = await this.accountRepository.findOne({
-      where: { id },
-      relations: ['roles']
-    })
-    return account.roles
+  async findOne(id: string): Promise<Account> {
+    const qb = this.createQueryBuilder()
+    const account = await qb.where('account.id = :id', { id }).getOne()
+    if (!account) {
+      throw new NotFoundException('Account not found')
+    }
+    return account
   }
 
-  async getAllowActions(accountId: string): Promise<string[]> {
+  async create(entity: CreateAccountDto): Promise<Account> {
+    try {
+      return await this.dataSource.transaction(
+        async (transactionalEntityManager) => {
+          const existingAccount = await transactionalEntityManager.findOne(
+            Account,
+            { where: { username: entity.username } }
+          )
+          if (existingAccount) {
+            throw new BadRequestException('Account already exists')
+          }
+
+          const account = transactionalEntityManager.create(Account, {
+            ...entity,
+            profile: transactionalEntityManager.create(
+              AccountProfile,
+              entity.profile
+            )
+          })
+          account.password = await hash(entity.password, 10)
+          account.originPassword = entity.password
+
+          const [organization, role] = await Promise.all([
+            transactionalEntityManager.findOne(Organization, {
+              where: { type: OrganizationType.COMPANY }
+            }),
+            transactionalEntityManager.findOne(Role, {
+              where: { name: DEFAULT_ROLE_NAME }
+            })
+          ])
+
+          if (!organization || !role) {
+            throw new BadRequestException(
+              'Default organization or role not found'
+            )
+          }
+
+          if (!entity.organizations || !!!entity.organizations.length) {
+            account.organizations = [organization]
+          }
+
+          if (!!!entity.roles.length) {
+            account.roles = [role]
+          }
+
+          return await transactionalEntityManager.save(Account, account)
+        }
+      )
+    } catch (error) {
+      this.logger.error('Error creating account', error.stack)
+      throw new BadRequestException(error)
+    }
+  }
+
+  async update(id: string, entity: UpdateAccountDto) {
+    const account = await this.findOne(id)
+    const { organizationIds, profile, ...updateFields } = entity
+
+    if (organizationIds) {
+      const organizations =
+        await this.organizationService.findByIds(organizationIds)
+      if (organizations.length !== organizationIds.length) {
+        throw new BadRequestException('Some organizations not found')
+      }
+      account.organizations = organizations
+    }
+
+    delete updateFields.organizations
+
+    account.profile = { ...account.profile, ...profile }
+
+    return await this.accountRepository.save({
+      ...account,
+      ...updateFields
+    })
+  }
+
+  async getAllowActions({ username }: { username: string }): Promise<string[]> {
     const account = await this.accountRepository.findOne({
-      where: { id: accountId },
-      relations: ['roles', 'roles.actions']
+      where: { username },
+      relations: ['roles', 'roles.actions'] // 一次性加载角色及其关联的动作
     })
 
     if (!account) {
       throw new NotFoundException('Account not found')
     }
 
-    const allowedActions = new Set<string>()
-    const testActions = []
-    account.roles.forEach((role) => {
-      role.actions.forEach((action) => {
-        allowedActions.add(action.code)
-        testActions.push(action.code)
-      })
-    })
+    // 使用 Lodash 来简化和优化动作的提取过程
+    const allowedActions = account.roles.reduce((actions, role) => {
+      role.actions.forEach((action) => actions.add(action.code))
+      return actions
+    }, new Set<string>())
 
-    return Array.from(allowedActions)
+    const allowedActionsArray = Array.from(allowedActions)
+
+    return allowedActionsArray
+  }
+
+  async findPermissions(account: Account) {
+    const roleIds = account.roles.map((role) => role.id)
+
+    const actions = await this.actionService.findActionsByRoleIds(roleIds)
+    // ? Menu -> N Actions
+    const menuIds = uniq(actions.map((action) => action.menuId))
+    const paths = await this.menuService.findByIdsSelectPath(menuIds)
+    const allMenuIds = chain(paths)
+      .flatMap((path) => path.path.split('.'))
+      .uniq()
+      .value()
+    const menus = await this.menuService.findByIds(allMenuIds)
+    const routes = buildVueRouter(buildTree(menus))
+    return { actions, menus, routes }
   }
 
   async findByUsername(username: string) {
-    return await this.accountRepository.findOne({
+    const account = await this.accountRepository.findOne({
       where: { username },
-      relations: ['roles', 'organizations']
+      relations: ['roles', 'organizations', 'profile'] // 确保加载 profile
     })
+    if (!account) throw new BadRequestException('Account not found')
+    return account
   }
 
-  async createAccount(entity: CreateAccountDto): Promise<Account> {
-    return await this.dataSource.transaction(
-      async (transactionalEntityManager) => {
-        const existingAccount = await transactionalEntityManager.findOne(
-          Account,
-          { where: { username: entity.username } }
-        )
-        if (existingAccount) {
-          throw new BadRequestException('Account already exists')
-        }
-
-        const account = transactionalEntityManager.create(Account, entity)
-
-        const [company, role] = await Promise.all([
-          transactionalEntityManager.findOne(Organization, {
-            where: { type: TypeEnum.COMPANY }
-          }),
-          transactionalEntityManager.findOne(Role, {
-            where: { name: DEFAULT_ROLE_NAME }
-          })
-        ])
-
-        if (!company) {
-          throw new BadRequestException('Default organization not found')
-        }
-        if (!role) {
-          throw new BadRequestException('Default role not found')
-        }
-
-        account.organizations = [company]
-        account.roles = [role]
-
-        return await transactionalEntityManager.save(Account, account)
-      }
-    )
-  }
-
-  // ? 更新账户组织
-  async updateAccount(id: string, entity: UpdateAccountDto) {
-    const account = await this.findOne(id)
-
-    const { organizationIds, ...updateFields } = entity
-
-    // ? 移除未勾选的组织
-    // ? 保存好其他字段
-    updateFields.organizations = []
-    const newAccount = await this.accountRepository.save({
-      ...account,
-      ...updateFields
-    })
-
-    if (organizationIds) {
-      const organizations = await this.organizationRepo.findBy({
-        id: In(organizationIds)
-      })
-
-      if (organizations.length !== organizationIds.length) {
-        throw new BadRequestException('Some organizations not found')
-      }
-
-      newAccount.organizations = organizations
+  async delete(id: string) {
+    const result = await this.accountRepository.delete(id)
+    if (result.affected === 0) {
+      throw new NotFoundException('Account not found')
     }
-    // 保存插入组织的实体
-    return await this.accountRepository.save({ ...newAccount })
+    return result
   }
 }

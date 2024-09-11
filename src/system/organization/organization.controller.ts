@@ -8,9 +8,8 @@ import {
   Query,
   UseGuards
 } from '@nestjs/common'
-import { Actions, SystemController } from 'src/shared/decorators'
-import { BaseController } from 'src/shared/providers/base.controller'
-import { DeepPartial } from 'typeorm'
+import { Actions, SystemController } from 'src/common/decorators'
+import { BaseController } from 'src/common/providers/base.controller'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { RolesGuard } from '../auth/roles.guard'
 import { Organization } from './entities/organization.entity'
@@ -40,27 +39,24 @@ export class OrganizationController extends BaseController<Organization> {
   @Get(':id')
   @Actions('view:sys:organizations')
   async findOne(id: string): Promise<Organization> {
-    return await super.findOne(id)
+    return await this.organizationService.findOne(id)
   }
 
   @Post()
   @Actions('create:sys:organizations')
   async create(entity: Organization): Promise<Organization> {
-    return await super.create(entity)
+    return await this.organizationService.create(entity)
   }
 
   @Put(':id')
   @Actions('update:sys:organizations')
-  async update(
-    id: string,
-    entity: DeepPartial<Organization>
-  ): Promise<Organization> {
-    return await super.update(id, entity)
+  async update(id: string, entity: Organization): Promise<Organization> {
+    return await this.organizationService.update(id, entity)
   }
 
   @Delete(':id')
   @Actions('delete:sys:organizations')
   async delete(id: string): Promise<void> {
-    return await super.delete(id)
+    return await this.organizationService.delete(id)
   }
 }

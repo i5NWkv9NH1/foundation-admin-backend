@@ -5,21 +5,11 @@ import {
   UnauthorizedException
 } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
-import { InjectRepository } from '@nestjs/typeorm'
-import { compare, hash } from 'bcrypt'
-import { chain, uniq } from 'lodash'
-import { DEFAULT_ROLE_NAME } from 'src/constants'
-import { CaptchaService } from 'src/modules/captcha/captcha.service'
-import { AccountService } from 'src/system/account/account.service'
-import { Account } from 'src/system/account/entities/account.entity'
-import { In, Repository } from 'typeorm'
-import { Action } from '../action/entities/action.entity'
-import { Menu } from '../menu/entities/menu.entity'
-import {
-  Organization,
-  TypeEnum
-} from '../organization/entities/organization.entity'
-import { Role } from '../role/entities/role.entity'
+import { compare } from 'bcrypt'
+import { DEFAULT_EXPIRE, REFRESH_EXPIRE } from 'src/constants'
+import { CaptchaService } from 'src/shared/captcha/captcha.service'
+import { AccountService } from '../account/account.service'
+import { Account } from '../account/entities/account.entity'
 import { BlacklistedTokensService } from './blacklisted-token.service'
 import { LogoutDto } from './dto/logout.dto'
 import { RefreshTokenDto } from './dto/refresh-token.dto'
@@ -28,107 +18,69 @@ import { SignupDto } from './dto/signup.dto'
 
 @Injectable()
 export class AuthService {
-  private logger = new Logger(AuthService.name)
+  protected logger = new Logger(AuthService.name)
 
   constructor(
     private readonly jwtService: JwtService,
     private readonly accountService: AccountService,
     private readonly blacklistedTokensService: BlacklistedTokensService,
-    private readonly captchaService: CaptchaService,
-
-    @InjectRepository(Account)
-    private readonly accountRepository: Repository<Account>,
-    @InjectRepository(Action)
-    private readonly actionRepo: Repository<Action>,
-    @InjectRepository(Menu)
-    private readonly menuRepo: Repository<Menu>,
-    @InjectRepository(Role)
-    private readonly roleRepo: Repository<Role>,
-    @InjectRepository(Organization)
-    private readonly organizationRepo: Repository<Organization>
+    private readonly captchaService: CaptchaService
   ) {}
 
-  async signup(signupDto: SignupDto): Promise<{
-    accessToken: string
-    refreshToken: string
-    account: Account
-  }> {
-    const { username, password, uniqueId, captcha, ...rest } = signupDto
-
-    const hashedPassword = await hash(password, 10)
-
-    let roles = rest.roles || []
-    let organizations = rest.organizations || []
-
-    if (roles.length === 0) {
-      const userRole = await this.roleRepo.findOne({
-        where: { name: DEFAULT_ROLE_NAME }
-      })
-      if (userRole) {
-        roles = [userRole]
-      }
-    }
-
-    if (organizations.length === 0) {
-      const company = await this.organizationRepo.findOne({
-        where: { type: TypeEnum.COMPANY }
-      })
-      if (company) {
-        organizations = [company]
-      }
-    }
-
-    const account = this.accountRepository.create({
-      ...rest,
-      username,
-      password: hashedPassword,
-      originPassword: password,
-      roles,
-      organizations
-    })
-
-    try {
-      const savedAccount = await this.accountRepository.save(account)
-      if (!savedAccount) {
-        throw new BadRequestException('Account could not be saved')
-      }
-      return await this.signin({ uniqueId, captcha, username, password })
-    } catch (error) {
-      throw new BadRequestException(`Signup failed: ${error.message}`)
-    }
-  }
-
-  async signin(signinDto: SigninDto): Promise<{
-    accessToken: string
-    refreshToken: string
-    account: Account
-    permissions: { actions: Action[]; menus: Menu[] }
-  }> {
-    const { username, password } = signinDto
+  private async validateCaptcha(uniqueId: string, captcha: string) {
     const isCaptchaValid = await this.captchaService.validateCaptcha(
-      signinDto.uniqueId,
-      signinDto.captcha
+      uniqueId,
+      captcha
     )
     if (!isCaptchaValid) {
       throw new BadRequestException('Captcha code error')
     }
+  }
 
-    const account = await this.accountService.findByUsername(username)
+  async signup(signupDto: SignupDto) {
+    const { uniqueId, captcha, ...rest } = signupDto
 
-    if (!account || !(await compare(password, account.password))) {
+    await this.validateCaptcha(uniqueId, captcha)
+
+    const savedAccount = await this.accountService.create({ ...rest })
+    if (!savedAccount) {
+      throw new BadRequestException('Account could not be saved')
+    }
+    return await this.signin({
+      account: {
+        username: savedAccount.username,
+        password: savedAccount.password
+      },
+      verify: { uniqueId, captcha }
+    })
+  }
+
+  async signin(signinDto: SigninDto) {
+    const {
+      account,
+      verify: { uniqueId, captcha }
+    } = signinDto
+
+    await this.validateCaptcha(uniqueId, captcha)
+
+    const isExist = await this.accountService.findByUsername(account.username)
+
+    if (!isExist || !(await compare(account.password, isExist.password))) {
       throw new BadRequestException('Username or Password incorrect')
     }
 
-    const payload = { account, sub: account.id }
-    const accessToken = this.generateToken(payload, '1h')
-    const refreshToken = this.generateToken(payload, '7d')
-    const permissions = await this.findPermissions(account)
+    const payload = { account: isExist, sub: isExist.id }
+    const accessToken = this.generateToken(payload, DEFAULT_EXPIRE)
+    const refreshToken = this.generateToken(payload, REFRESH_EXPIRE)
+    // const permissions = await this.accountService.findPermissions(isExist)
 
     return {
-      accessToken,
-      refreshToken,
-      account,
-      permissions
+      tokens: {
+        accessToken,
+        refreshToken
+      },
+      account: isExist
+      // permissions
     }
   }
 
@@ -146,17 +98,21 @@ export class AuthService {
 
       const newAccessToken = this.generateToken(
         { sub: payload.sub, account: payload.account },
-        '1h'
+        DEFAULT_EXPIRE
       )
       const newRefreshToken = this.generateToken(
         { sub: payload.sub, account: payload.account },
-        '7d'
+        REFRESH_EXPIRE
       )
-      const permissions = await this.findPermissions(payload.account)
+      const permissions = await this.accountService.findPermissions(
+        payload.account
+      )
 
       return {
-        accessToken: newAccessToken,
-        refreshToken: newRefreshToken,
+        tokens: {
+          accessToken: newAccessToken,
+          refreshToken: newRefreshToken
+        },
         account: payload.account,
         permissions
       }
@@ -165,60 +121,31 @@ export class AuthService {
     }
   }
 
-  private generateToken(payload: any, expiresIn: string): string {
+  generateToken(payload: any, expiresIn: string): string {
     return this.jwtService.sign(payload, { expiresIn })
   }
 
-  // typeorm
-  private async findPermissions(
-    account: Account
-  ): Promise<{ actions: Action[]; menus: Menu[] }> {
-    // 获取用户的角色ID数组
-    const roleIds = account.roles.map((role) => role.id)
-
-    // 查找所有属于这些角色的actions
-    const actions = await this.actionRepo.find({
-      where: {
-        roles: { id: In(roleIds) }
-      }
-    })
-    // 提取唯一的 menuIds
-    const menuIds = uniq(actions.map((action) => action.menuId))
-    // 获取所有相关的路径
-    const paths = await this.menuRepo.find({
-      where: {
-        id: In(menuIds)
-      },
-      select: ['path']
-    })
-
-    // 获取所有子菜单的ID
-    const allMenuIds = chain(paths)
-      .flatMap((path) => path.path.split('.'))
-      .uniq()
-      .value()
-    // 查找所有菜单项
-    const menus = await this.menuRepo.find({
-      where: {
-        id: In(allMenuIds)
-      }
-    })
-    return { actions, menus }
-  }
-
-  async logout({ accessToken, refreshToken }: LogoutDto) {
-    // 处理 access token
+  async logout(loginDto: LogoutDto) {
+    const { accessToken, refreshToken } = loginDto
     await this.blacklistToken(accessToken)
-
-    // 处理 refresh token
     await this.blacklistToken(refreshToken)
   }
 
-  private async blacklistToken(token: string): Promise<void> {
+  async blacklistToken(token: string): Promise<void> {
     const decodedToken = this.jwtService.decode(token) as any
     if (decodedToken && decodedToken.exp) {
       const expiry = decodedToken.exp - Math.floor(Date.now() / 1000)
       await this.blacklistedTokensService.addTokenToBlacklist(token, expiry)
+    }
+  }
+
+  async findMe(_account: Account) {
+    const account = await this.accountService.findOne(_account.id)
+    const permissions = await this.accountService.findPermissions(account)
+
+    return {
+      permissions,
+      account
     }
   }
 }

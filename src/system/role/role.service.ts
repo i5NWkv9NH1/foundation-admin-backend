@@ -1,11 +1,10 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { BaseService } from 'src/shared/providers/base.service'
+import { BaseService } from 'src/common/providers/base.service'
 import { Repository, SelectQueryBuilder } from 'typeorm'
 import { ActionService } from '../action/action.service'
 import { Action } from '../action/entities/action.entity'
-import { Menu } from '../menu/entities/menu.entity'
-import { Role, RoleRelations } from './entities/role.entity'
+import { Role } from './entities/role.entity'
 
 @Injectable()
 export class RoleService extends BaseService<Role> {
@@ -13,46 +12,14 @@ export class RoleService extends BaseService<Role> {
   constructor(
     @InjectRepository(Role)
     private readonly roleRepo: Repository<Role>,
-    @InjectRepository(Action)
-    private readonly actionRepo: Repository<Action>,
-    @InjectRepository(Menu)
-    private readonly menuRepo: Repository<Menu>,
-    private readonly actionService: ActionService
+    private readonly actionSerivce: ActionService
   ) {
     super(roleRepo)
   }
   protected createQueryBuilder(): SelectQueryBuilder<Role> {
     const qb = this.roleRepo.createQueryBuilder('role')
     return qb
-    //! filter ROOT role
-    // .andWhere('role.name != :name', { name: 'ROOT' })
-    // .orderBy('role.sort', 'ASC')
   }
-  // protected applyFilters(
-  //   qb: SelectQueryBuilder<Role>,
-  //   filters: Record<string, any>
-  // ): void {
-  //   Object.keys(filters).forEach((key) => {
-  //     const value = filters[key]
-  //     if (value) {
-  //       if (key === 'text') {
-  //         qb.andWhere('role.label LIKE :search', {
-  //           search: `%${value}%`
-  //         })
-  //       } else if (key === 'name') {
-  //         // qb.andWhere('CAST(role.name AS TEXT)  LIKE :search', {
-  //         //   search: `%${value}%`
-  //         // })
-  //         qb.andWhere('role.name = :name', { name: value })
-  //       } else if (key === 'status') {
-  //         if (value !== 'ALL') {
-  //           qb.andWhere('role.status = :status', { status: value })
-  //         }
-  //       } else {
-  //       }
-  //     }
-  //   })
-  // }
   protected applyFilters(
     qb: SelectQueryBuilder<Role>,
     filters: Record<string, any>
@@ -84,16 +51,9 @@ export class RoleService extends BaseService<Role> {
   }
 
   protected applyCustomizations(qb: SelectQueryBuilder<Role>): void {
-    /**
-     * ! WHERE 子句的逻辑是累加的，
-     */
     qb
-      // .andWhere('role.name != :name', { name: 'ROOT' })
-      //
-      .andWhere(`role.name != :excludedName`, { excludedName: 'ROOT' })
+      // .andWhere(`role.name != :excludedName`, { excludedName: 'ROOT' })
       .orderBy('role.sort', 'ASC')
-    // .leftJoinAndSelect('role.accounts', 'account')
-    // .leftJoinAndSelect('role.actions', 'action')
   }
 
   async findAll(
@@ -115,37 +75,21 @@ export class RoleService extends BaseService<Role> {
       meta: {
         page,
         itemsPerPage,
-        itemsCount: totalItems,
-        pagesCount: Math.ceil(totalItems / itemsPerPage)
+        itemsLength: totalItems,
+        pagesLength: Math.ceil(totalItems / itemsPerPage)
       }
     }
   }
 
   async findOne(id: string): Promise<Role> {
     const qb = this.roleRepo.createQueryBuilder('role')
-    return qb
-      .leftJoinAndSelect('role.accounts', 'account')
-      .leftJoinAndSelect('role.actions', 'action')
-      .where('role.id =:id', { id })
-      .getOne()
-  }
-
-  async findRoles(): Promise<Role[]> {
-    return this.roleRepo.find({ relations: ['actions'] })
-  }
-  async findRoleById(id: string): Promise<Role> {
-    return this.roleRepo.findOne({ where: { id }, relations: ['actions'] })
-  }
-
-  async assignActions(roleId: string, actionIds: string[]): Promise<void> {
-    const role = await this.roleRepo.findOne({
-      where: { id: roleId },
-      relations: ['actions']
-    })
-    // Assuming ActionService is available to get actions by IDs
-    const actions = await this.actionService.findActionsByIds(actionIds)
-    role.actions = actions
-    await this.roleRepo.save(role)
+    return (
+      qb
+        // .leftJoinAndSelect('role.accounts', 'account')
+        .leftJoinAndSelect('role.actions', 'action')
+        .where('role.id =:id', { id })
+        .getOne()
+    )
   }
 
   async findActionsByRoleId(roleId: string): Promise<Action[]> {
@@ -153,7 +97,7 @@ export class RoleService extends BaseService<Role> {
       where: {
         id: roleId
       },
-      relations: [RoleRelations.Actions]
+      relations: ['actions']
     })
 
     return role ? role.actions : []
@@ -162,7 +106,7 @@ export class RoleService extends BaseService<Role> {
   async updateRoleActionsByRoleIdMenuId(
     roleId: string,
     menuId: string,
-    actions: Action[]
+    actionIds: string[]
   ) {
     // 获取当前角色
     const role = await this.roleRepo.findOne({
@@ -173,6 +117,8 @@ export class RoleService extends BaseService<Role> {
     if (!role) {
       throw new BadRequestException('Role not found')
     }
+
+    const actions = await this.actionSerivce.findActionsByIds(actionIds)
 
     // 过滤掉与该菜单不相关的 action
     const actionsForMenu = actions.filter((action) => action.menuId === menuId)
@@ -232,8 +178,8 @@ export class RoleService extends BaseService<Role> {
       meta: {
         page,
         itemsPerPage,
-        itemsCount: totalItems,
-        pagesCount: Math.ceil(totalItems / itemsPerPage)
+        itemsLength: totalItems,
+        pagesLength: Math.ceil(totalItems / itemsPerPage)
       }
     }
   }
